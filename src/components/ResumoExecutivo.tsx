@@ -7,25 +7,31 @@ export function ResumoExecutivo({ vendas }: Props) {
   const total = vendas.length
   const faturamento = vendas.reduce((s, v) => s + v.valor, 0)
 
+  // Origem breakdown
   const origemGroups = {
     organico: vendas.filter(v => v.origem.startsWith('Organico')),
     meta: vendas.filter(v => v.origem.startsWith('Meta')),
     cadastro: vendas.filter(v => v.origem === 'Cadastro Manual'),
     naoEncontrado: vendas.filter(v => v.origem === 'Nao encontrado'),
     linktree: vendas.filter(v => v.origem === 'Linktree'),
+    googleSite: vendas.filter(v => v.origem === 'Google/Site'),
   }
 
+  // Meta breakdown
   const metaRedirect = vendas.filter(v => v.origem === 'Meta Redirect')
   const metaCTWA = vendas.filter(v => v.origem === 'Meta CTWA')
   const metaDireto = vendas.filter(v => v.origem === 'Meta Direto')
 
+  // Disparos
   const comDisparo = vendas.filter(v => v.recebeu_disparo)
   const converteram = vendas.filter(v => v.comprou_apos_disparo === 'SIM')
   const naoConverteram = comDisparo.filter(v => v.comprou_apos_disparo === 'NAO')
 
+  // Tempo CRM
   const comCRM = vendas.filter(v => v.tempo_compra_dias != null)
   const tempoMedio = comCRM.length > 0 ? comCRM.reduce((s, v) => s + (v.tempo_compra_dias ?? 0), 0) / comCRM.length : 0
 
+  // Vendedores ranking
   const byVendedor = vendas.reduce((acc, v) => {
     if (!acc[v.vendedor]) acc[v.vendedor] = { count: 0, valor: 0 }
     acc[v.vendedor].count += 1
@@ -65,7 +71,8 @@ export function ResumoExecutivo({ vendas }: Props) {
                 <Row label="Meta Direto" value={`${metaDireto.length}x = ${formatCurrency(sum(metaDireto))}`} />
               </div>
               <Row label="Nao encontrado no CRM" value={`${origemGroups.naoEncontrado.length} vendas (${pct(origemGroups.naoEncontrado.length)}%) = ${formatCurrency(sum(origemGroups.naoEncontrado))}`} warn />
-              <Row label="Linktree" value={`${origemGroups.linktree.length} venda = ${formatCurrency(sum(origemGroups.linktree))}`} />
+              <Row label="Linktree" value={`${origemGroups.linktree.length} vendas (${pct(origemGroups.linktree.length)}%) = ${formatCurrency(sum(origemGroups.linktree))}`} />
+              <Row label="Google/Site" value={`${origemGroups.googleSite.length} vendas (${pct(origemGroups.googleSite.length)}%) = ${formatCurrency(sum(origemGroups.googleSite))}`} />
             </div>
           </div>
         </div>

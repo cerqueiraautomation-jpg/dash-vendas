@@ -13,6 +13,7 @@ const COLORS: Record<string, string> = {
   'Meta Direto': '#ef4444',
   'Nao encontrado': '#64748b',
   'Linktree': '#06b6d4',
+  'Google/Site': '#10b981',
 }
 
 export function ChartOrigem({ vendas }: Props) {
@@ -44,7 +45,7 @@ export function ChartOrigem({ vendas }: Props) {
               </Pie>
               <Tooltip
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={((val: number) => formatCurrency(val)) as any}
+              formatter={((val: number) => formatCurrency(val)) as any}
                 contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
               />
             </PieChart>

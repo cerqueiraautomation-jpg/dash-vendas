@@ -201,3 +201,78 @@ CREATE TABLE vendas_relatorio (
 - Match por email (Bling pode ter, CRM tem campo email)
 - Score de confianca no match (exato=100%, parcial=70%, telefone=90%)
 - Log de matches para auditoria
+
+## Validacao por Message Fingerprint (06/03/2026)
+
+### Problema
+A metadata do CRM (contacts.origin + conversations.referral_source) tem falhas:
+- Bug de origin NULL com CTWA na conversa
+- Canais nao-oficiais que nao capturam referral_source
+- "Meta Direto" usado como fallback incorreto
+
+### Solucao: Primeira Mensagem como Fingerprint
+**Regra:** A primeira mensagem da conversa (ORDER BY created_at ASC) determina a origem real.
+
+### 4 Fingerprints Definidos
+
+| Pattern (ILIKE) | Origem | Quem envia | Detalhes |
+|-----------------|--------|------------|----------|
+| `%Tenho interesse e queria mais informa%` | **Meta CTWA** | Cliente (is_from_me=false) | Mensagem pre-preenchida do anuncio Click-to-WhatsApp |
+| `%recebi o seu contato aqui%` | **Meta Redirect** | Atendente (is_from_me=true) | Template `redirect_boas_vindas` / `redirect_boas_vindas_mkt` |
+| `%vim pelo Linktree%` | **Linktree** | Cliente (is_from_me=false) | Chatbot link do Linktree |
+| `%vim pelo Site%` | **Google/Site** | Cliente (is_from_me=false) | Chatbot link do site |
+
+### Prioridade
+1. **Primeira mensagem ganha** — se o contato tem msg CTWA e depois msg Linktree, a origem e CTWA
+2. Fingerprint sobrepoe metadata do CRM quando ha conflito
+
+### Resultados da Validacao (06/03/2026)
+
+**19 vendas reclassificadas:**
+
+| De | Para | Quantidade |
+|----|------|:---------:|
+| Organico (sem origem) | Linktree | 8 |
+| Organico (WhatsApp) | Linktree | 2 |
+| Meta Direto | Linktree | 1 |
+| Meta Direto | Meta CTWA | 3 |
+| Organico (sem origem) | Meta CTWA | 1 |
+| Organico (sem origem) | Meta Redirect | 1 |
+| Cadastro Manual | Meta Redirect | 1 |
+| Organico (WhatsApp) | Meta Redirect | 1 |
+| Organico (WhatsApp) | Google/Site | 1 |
+
+**Impacto por categoria:**
+- Linktree: 2 → 13 vendas (R$ 1.518 → R$ 20.151)
+- Meta CTWA: 18 → 22 vendas (R$ 20.130 → R$ 23.855)
+- Meta Redirect: 14 → 17 vendas (R$ 20.785 → R$ 23.641)
+- Google/Site: 0 → 1 venda (R$ 1.608) — nova categoria
+- Organico (sem origem): 121 → 110 vendas
+- Organico (WhatsApp): 28 → 24 vendas
+- Meta Direto: 4 → 1 venda
+
+### Query SQL Utilizada (exemplo CTWA)
+```sql
+WITH vendas_contacts AS (
+  SELECT vr.pedido, vr.nome, vr.origem, c.id as contact_id
+  FROM vendas_relatorio vr
+  JOIN contacts c ON LOWER(TRIM(c.full_name)) = LOWER(TRIM(vr.nome))
+),
+first_msg AS (
+  SELECT DISTINCT ON (vc.pedido)
+    vc.pedido, vc.nome, vc.origem,
+    m.content, m.is_from_me, m.created_at
+  FROM vendas_contacts vc
+  JOIN conversations conv ON conv.contact_id = vc.contact_id
+  JOIN messages m ON m.conversation_id = conv.id
+  WHERE m.content ILIKE '%Tenho interesse e queria mais informa%'
+    AND m.is_from_me = false
+  ORDER BY vc.pedido, m.created_at ASC
+)
+SELECT * FROM first_msg;
+```
+
+### Caso Especial: FELIPE / DRAGO (pedido 13849)
+- Plano original listava como CTWA confirmado
+- Primeira mensagem real: "Opa! Deseja seguir com seu atendimento agora?" (do atendente)
+- Nenhum fingerprint match — mantido como "Cadastro Manual"
