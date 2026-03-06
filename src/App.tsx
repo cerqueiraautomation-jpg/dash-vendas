@@ -1,8 +1,10 @@
 import { useVendas } from './hooks/useVendas'
 import { KPICards } from './components/KPICards'
+import { ResumoExecutivo } from './components/ResumoExecutivo'
 import { ChartOrigem } from './components/ChartOrigem'
 import { ChartVendedor } from './components/ChartVendedor'
 import { ChartDiario } from './components/ChartDiario'
+import { ChartTempoCRM } from './components/ChartTempoCRM'
 import { ChartDisparo } from './components/ChartDisparo'
 import { ChartCampanha } from './components/ChartCampanha'
 import { DataTable } from './components/DataTable'
@@ -32,6 +34,8 @@ function App() {
 
       <KPICards vendas={vendas} />
 
+      <ResumoExecutivo vendas={vendas} />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartOrigem vendas={vendas} />
         <ChartVendedor vendas={vendas} />
@@ -39,10 +43,11 @@ function App() {
 
       <ChartDiario vendas={vendas} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-4">
-        <ChartDisparo vendas={vendas} />
-        <ChartCampanha vendas={vendas} />
-      </div>
+      <ChartTempoCRM vendas={vendas} />
+
+      <ChartDisparo vendas={vendas} />
+
+      <ChartCampanha vendas={vendas} />
 
       <DataTable vendas={vendas} />
     </div>
