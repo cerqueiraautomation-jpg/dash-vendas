@@ -1,9 +1,16 @@
 import type { Venda } from '../lib/supabase'
 import { formatCurrency } from '../utils/format'
 
-type Props = { vendas: Venda[] }
+const MONTH_LABELS: Record<string, string> = {
+  '2025-12': 'Dez 2025',
+  '2026-01': 'Jan 2026',
+  '2026-02': 'Fev 2026',
+  '2026-03': 'Mar 2026',
+}
 
-export function ResumoExecutivo({ vendas }: Props) {
+type Props = { vendas: Venda[]; mesSelecionado?: string }
+
+export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
   const total = vendas.length
   const faturamento = vendas.reduce((s, v) => s + v.valor, 0)
 
@@ -45,7 +52,9 @@ export function ResumoExecutivo({ vendas }: Props) {
 
   return (
     <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-      <h3 className="text-sm font-semibold mb-3 text-slate-300">Resumo Executivo - Fevereiro 2026</h3>
+      <h3 className="text-sm font-semibold mb-3 text-slate-300">
+        Resumo Executivo{mesSelecionado && mesSelecionado !== 'todos' ? ` - ${MONTH_LABELS[mesSelecionado] ?? mesSelecionado}` : ''}
+      </h3>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
 
         <div className="space-y-3">
