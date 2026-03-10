@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Database, Loader2, CheckCircle2, AlertCircle, Play, RefreshCw } from 'lucide-react'
+import { Database, Loader2, CheckCircle2, AlertCircle, Play, RefreshCw, Zap } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 type WindowResult = {
@@ -20,6 +20,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [incluirTodasLojas, setIncluirTodasLojas] = useState(true)
+  const [modoRapido, setModoRapido] = useState(true)
   const [running, setRunning] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [progress, setProgress] = useState<WindowResult[]>([])
@@ -71,7 +72,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
 
       try {
         const { data, error: fnError } = await supabase.functions.invoke('sync-bling-vendas', {
-          body: { dataInicial: w.inicio, dataFinal: w.fim, incluirTodasLojas },
+          body: { dataInicial: w.inicio, dataFinal: w.fim, incluirTodasLojas, modoRapido },
         })
 
         if (fnError) throw fnError
@@ -86,7 +87,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
           errors: data?.errors ?? 0,
         }])
 
-        await new Promise(r => setTimeout(r, 2000))
+        await new Promise(r => setTimeout(r, modoRapido ? 500 : 2000))
       } catch (err) {
         setError(`Erro na janela ${w.inicio} a ${w.fim}: ${err instanceof Error ? err.message : String(err)}`)        
         break
@@ -97,7 +98,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
     setDone(true)
     setCurrentWindow('')
     onSyncComplete?.()
-  }, [dataInicio, dataFim, incluirTodasLojas, onSyncComplete])
+  }, [dataInicio, dataFim, incluirTodasLojas, modoRapido, onSyncComplete])
 
   const handleSyncNow = useCallback(async () => {
     setSyncing(true)
@@ -185,17 +186,32 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
               className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-orange-500"
             />
           </div>
-          <div className="flex items-end gap-3">
-            <label className="flex items-center gap-2 cursor-pointer pb-2">
-              <input
-                type="checkbox"
-                checked={incluirTodasLojas}
-                onChange={e => setIncluirTodasLojas(e.target.checked)}
-                disabled={running}
-                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-orange-500 focus:ring-orange-500"
-              />
-              <span className="text-xs text-slate-400">Todas as lojas</span>
-            </label>
+          <div className="flex flex-col sm:flex-row items-end gap-3">
+            <div className="flex gap-3 pb-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={incluirTodasLojas}
+                  onChange={e => setIncluirTodasLojas(e.target.checked)}
+                  disabled={running}
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-orange-500 focus:ring-orange-500"
+                />
+                <span className="text-xs text-slate-400">Todas as lojas</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer" title="Insercao em massa sem enriquecimento CRM. Mais rapido, origem fica como Pendente.">
+                <input
+                  type="checkbox"
+                  checked={modoRapido}
+                  onChange={e => setModoRapido(e.target.checked)}
+                  disabled={running}
+                  className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-yellow-500 focus:ring-yellow-500"
+                />
+                <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-yellow-400" />
+                  Modo rapido
+                </span>
+              </label>
+            </div>
             <button
               onClick={handleBackfill}
               disabled={running || !dataInicio || !dataFim || syncing}
