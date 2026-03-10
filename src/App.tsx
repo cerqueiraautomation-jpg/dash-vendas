@@ -13,27 +13,18 @@ import { ChartCampanha } from './components/ChartCampanha'
 import { ChartSegmentacao } from './components/ChartSegmentacao'
 import { DataTable } from './components/DataTable'
 import { UploadPlanilha } from './components/UploadPlanilha'
-
-const MONTH_LABELS: Record<string, string> = {
-  '2025-12': 'Dez 2025',
-  '2026-01': 'Jan 2026',
-  '2026-02': 'Fev 2026',
-  '2026-03': 'Mar 2026',
-}
+import { BackfillBling } from './components/BackfillBling'
+import { getMonthLabel } from './utils/format'
 
 function getMonthKey(dataPedido: string): string {
   return dataPedido.slice(0, 7)
 }
 
-function getMonthLabel(key: string): string {
-  return MONTH_LABELS[key] ?? key
-}
-
 function App() {
-  const { vendas, loading } = useVendas()
+  const { vendas, loading, refetch: refetchVendas } = useVendas()
   const { historico, loading: historicoLoading, refetch: refetchHistorico } = useLeadHistorico()
   const [mesSelecionado, setMesSelecionado] = useState<string>('todos')
-  const [showUpload, setShowUpload] = useState(false)
+  const [showAdmin, setShowAdmin] = useState(false)
 
   const mesesDisponiveis = useMemo(() => {
     const keys = [...new Set(vendas.map(v => getMonthKey(v.data_pedido)))].sort()
@@ -66,14 +57,14 @@ function App() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setShowUpload(!showUpload)}
+            onClick={() => setShowAdmin(!showAdmin)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              showUpload
+              showAdmin
                 ? 'bg-blue-500 text-white'
                 : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
             }`}
           >
-            {showUpload ? 'Fechar Upload' : 'Upload Planilha'}
+            {showAdmin ? 'Fechar Painel' : 'Importar Dados'}
           </button>
           <div className="text-xs text-slate-500">
             {vendasFiltradas.length} registros
@@ -81,7 +72,12 @@ function App() {
         </div>
       </div>
 
-      {showUpload && <UploadPlanilha onUploadComplete={refetchHistorico} />}
+      {showAdmin && (
+        <div className="space-y-4">
+          <BackfillBling onSyncComplete={refetchVendas} />
+          <UploadPlanilha onUploadComplete={refetchHistorico} />
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <button

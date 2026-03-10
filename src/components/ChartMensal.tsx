@@ -1,14 +1,7 @@
 import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import type { Venda } from '../lib/supabase'
-import { formatCurrency } from '../utils/format'
-
-const MONTH_LABELS: Record<string, string> = {
-  '2025-12': 'Dez 2025',
-  '2026-01': 'Jan 2026',
-  '2026-02': 'Fev 2026',
-  '2026-03': 'Mar 2026',
-}
+import { formatCurrency, getMonthLabel } from '../utils/format'
 
 type Props = {
   vendas: Venda[]
@@ -28,7 +21,7 @@ export function ChartMensal({ vendas }: Props) {
     return Object.entries(byMonth)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, d]) => ({
-        mes: MONTH_LABELS[key] ?? key,
+        mes: getMonthLabel(key),
         faturamento: d.faturamento,
         pedidos: d.pedidos,
       }))

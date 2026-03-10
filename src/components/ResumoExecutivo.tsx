@@ -1,12 +1,5 @@
 import type { Venda } from '../lib/supabase'
-import { formatCurrency } from '../utils/format'
-
-const MONTH_LABELS: Record<string, string> = {
-  '2025-12': 'Dez 2025',
-  '2026-01': 'Jan 2026',
-  '2026-02': 'Fev 2026',
-  '2026-03': 'Mar 2026',
-}
+import { formatCurrency, getMonthLabel } from '../utils/format'
 
 type Props = { vendas: Venda[]; mesSelecionado?: string }
 
@@ -14,7 +7,6 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
   const total = vendas.length
   const faturamento = vendas.reduce((s, v) => s + v.valor, 0)
 
-  // Origem breakdown
   const origemGroups = {
     organico: vendas.filter(v => v.origem.startsWith('Organico')),
     meta: vendas.filter(v => v.origem.startsWith('Meta')),
@@ -24,21 +16,17 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
     googleSite: vendas.filter(v => v.origem === 'Google/Site'),
   }
 
-  // Meta breakdown
   const metaRedirect = vendas.filter(v => v.origem === 'Meta Redirect')
   const metaCTWA = vendas.filter(v => v.origem === 'Meta CTWA')
   const metaDireto = vendas.filter(v => v.origem === 'Meta Direto')
 
-  // Disparos
   const comDisparo = vendas.filter(v => v.recebeu_disparo)
   const converteram = vendas.filter(v => v.comprou_apos_disparo === 'SIM')
   const naoConverteram = comDisparo.filter(v => v.comprou_apos_disparo === 'NAO')
 
-  // Tempo CRM
   const comCRM = vendas.filter(v => v.tempo_compra_dias != null)
   const tempoMedio = comCRM.length > 0 ? comCRM.reduce((s, v) => s + (v.tempo_compra_dias ?? 0), 0) / comCRM.length : 0
 
-  // Vendedores ranking
   const byVendedor = vendas.reduce((acc, v) => {
     if (!acc[v.vendedor]) acc[v.vendedor] = { count: 0, valor: 0 }
     acc[v.vendedor].count += 1
@@ -53,7 +41,7 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
   return (
     <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
       <h3 className="text-sm font-semibold mb-3 text-slate-300">
-        Resumo Executivo{mesSelecionado && mesSelecionado !== 'todos' ? ` - ${MONTH_LABELS[mesSelecionado] ?? mesSelecionado}` : ''}
+        Resumo Executivo{mesSelecionado && mesSelecionado !== 'todos' ? ` - ${getMonthLabel(mesSelecionado)}` : ''}
       </h3>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
 

@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase, type Venda } from '../lib/supabase'
 
 export function useVendas() {
   const [vendas, setVendas] = useState<Venda[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
+    setLoading(true)
     supabase
       .from('vendas_relatorio')
       .select('*')
@@ -18,5 +19,7 @@ export function useVendas() {
       })
   }, [])
 
-  return { vendas, loading }
+  useEffect(() => { fetchData() }, [fetchData])
+
+  return { vendas, loading, refetch: fetchData }
 }
