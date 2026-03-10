@@ -19,6 +19,7 @@ type Props = {
 export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+  const [incluirTodasLojas, setIncluirTodasLojas] = useState(true)
   const [running, setRunning] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [progress, setProgress] = useState<WindowResult[]>([])
@@ -70,7 +71,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
 
       try {
         const { data, error: fnError } = await supabase.functions.invoke('sync-bling-vendas', {
-          body: { dataInicial: w.inicio, dataFinal: w.fim },
+          body: { dataInicial: w.inicio, dataFinal: w.fim, incluirTodasLojas },
         })
 
         if (fnError) throw fnError
@@ -96,7 +97,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
     setDone(true)
     setCurrentWindow('')
     onSyncComplete?.()
-  }, [dataInicio, dataFim, onSyncComplete])
+  }, [dataInicio, dataFim, incluirTodasLojas, onSyncComplete])
 
   const handleSyncNow = useCallback(async () => {
     setSyncing(true)
@@ -184,7 +185,17 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
               className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-orange-500"
             />
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end gap-3">
+            <label className="flex items-center gap-2 cursor-pointer pb-2">
+              <input
+                type="checkbox"
+                checked={incluirTodasLojas}
+                onChange={e => setIncluirTodasLojas(e.target.checked)}
+                disabled={running}
+                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-orange-500 focus:ring-orange-500"
+              />
+              <span className="text-xs text-slate-400">Todas as lojas</span>
+            </label>
             <button
               onClick={handleBackfill}
               disabled={running || !dataInicio || !dataFim || syncing}
