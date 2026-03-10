@@ -204,10 +204,11 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
             </Pie>
             <Tooltip
               contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-              formatter={(value: number, name: string) => [
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={((value: number, name: string) => [
                 `${value} vendas (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`,
                 name
-              ]}
+              ]) as any}
             />
             <Legend />
           </PieChart>
