@@ -56,27 +56,30 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
   const segmentacao = useMemo(() => {
     if (loadingContacts || historicoLoading || historico.length === 0) return []
 
-    // Phone -> historico lookup
+    // Phone -> historico lookup (dados primarios)
     const phoneToHistorico = new Map<string, LeadHistorico[]>()
     for (const h of historico) {
+      if (!h.telefone_normalizado) continue
       const entries = phoneToHistorico.get(h.telefone_normalizado) ?? []
       entries.push(h)
       phoneToHistorico.set(h.telefone_normalizado, entries)
     }
 
-    // Nome -> historico lookup (fallback)
-    const nomeToHistorico = new Map<string, LeadHistorico[]>()
+    // Nome completo exato -> historico lookup (fallback conservador)
+    const nomeExatoToHistorico = new Map<string, LeadHistorico[]>()
     for (const h of historico) {
       const key = h.nome.toLowerCase().trim()
-      const entries = nomeToHistorico.get(key) ?? []
+      if (key.length < 5) continue // nomes muito curtos nao sao confiaveis
+      const entries = nomeExatoToHistorico.get(key) ?? []
       entries.push(h)
-      nomeToHistorico.set(key, entries)
+      nomeExatoToHistorico.set(key, entries)
     }
 
-    // Compras por nome (recompra detection)
+    // Compras por nome normalizado (recompra detection)
     const comprasPorNome = new Map<string, number>()
     for (const v of vendas) {
-      comprasPorNome.set(v.nome, (comprasPorNome.get(v.nome) ?? 0) + 1)
+      const key = v.nome.toLowerCase().trim()
+      comprasPorNome.set(key, (comprasPorNome.get(key) ?? 0) + 1)
     }
 
     const counts: Record<string, { count: number; valor: number }> = {
@@ -87,10 +90,11 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
     }
 
     for (const v of vendas) {
-      const isRecompra = (comprasPorNome.get(v.nome) ?? 1) > 1
+      const nomeKey = v.nome.toLowerCase().trim()
+      const isRecompra = (comprasPorNome.get(nomeKey) ?? 1) > 1
       let teveTrafego = false
 
-      // 1. Match by phone
+      // 1. Match por telefone (dado primario, mais confiavel)
       const phone = v.contact_id ? contactPhones.get(v.contact_id) : undefined
       let trafegoEntries: LeadHistorico[] | undefined
 
@@ -98,25 +102,12 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
         trafegoEntries = phoneToHistorico.get(phone)
       }
 
-      // 2. Fallback: match by nome
-      if (!trafegoEntries) {
-        const nomeNorm = v.nome.toLowerCase().trim()
-        trafegoEntries = nomeToHistorico.get(nomeNorm)
-
-        if (!trafegoEntries) {
-          const firstName = nomeNorm.split(/[\/\-]/)[0].trim()
-          if (firstName.length > 3) {
-            for (const [key, entries] of nomeToHistorico) {
-              if (key.includes(firstName) || firstName.includes(key)) {
-                trafegoEntries = entries
-                break
-              }
-            }
-          }
-        }
+      // 2. Fallback: match por nome completo exato (sem fuzzy)
+      if (!trafegoEntries && nomeKey.length >= 5) {
+        trafegoEntries = nomeExatoToHistorico.get(nomeKey)
       }
 
-      // Check attribution window
+      // Verificar janela de atribuicao
       if (trafegoEntries) {
         const dataPedido = new Date(v.data_pedido + 'T12:00:00')
         teveTrafego = trafegoEntries.some(e => {
