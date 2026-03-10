@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { CalendarDays } from 'lucide-react'
 import { useVendas } from './hooks/useVendas'
 import { useLeadHistorico } from './hooks/useLeadHistorico'
 import { KPICards } from './components/KPICards'
@@ -14,16 +15,24 @@ import { ChartSegmentacao } from './components/ChartSegmentacao'
 import { DataTable } from './components/DataTable'
 import { UploadPlanilha } from './components/UploadPlanilha'
 import { BackfillBling } from './components/BackfillBling'
-import { getMonthLabel } from './utils/format'
+import { getMonthLabel, formatDate } from './utils/format'
 
 function getMonthKey(dataPedido: string): string {
   return dataPedido.slice(0, 7)
 }
 
+function toDateStr(d: Date): string {
+  return d.toISOString().split('T')[0]
+}
+
+type FilterMode = 'todos' | 'hoje' | '7dias' | '15dias' | 'dia' | 'mes'
+
 function App() {
   const { vendas, loading, refetch: refetchVendas } = useVendas()
   const { historico, loading: historicoLoading, refetch: refetchHistorico } = useLeadHistorico()
-  const [mesSelecionado, setMesSelecionado] = useState<string>('todos')
+  const [filterMode, setFilterMode] = useState<FilterMode>('todos')
+  const [mesSelecionado, setMesSelecionado] = useState<string>('')
+  const [diaSelecionado, setDiaSelecionado] = useState<string>(toDateStr(new Date()))
   const [showAdmin, setShowAdmin] = useState(false)
   const [backfillDatas, setBackfillDatas] = useState<{ inicio: string; fim: string } | null>(null)
 
@@ -33,13 +42,38 @@ function App() {
   }, [vendas])
 
   const vendasFiltradas = useMemo(() => {
-    if (mesSelecionado === 'todos') return vendas
-    return vendas.filter(v => getMonthKey(v.data_pedido) === mesSelecionado)
-  }, [vendas, mesSelecionado])
+    const hoje = toDateStr(new Date())
 
-  const subtitulo = mesSelecionado === 'todos'
-    ? 'Todos os meses - Relatorio Bling + CRM'
-    : `${getMonthLabel(mesSelecionado)} - Relatorio Bling + CRM`
+    switch (filterMode) {
+      case 'hoje':
+        return vendas.filter(v => v.data_pedido === hoje)
+      case '7dias': {
+        const from = toDateStr(new Date(Date.now() - 7 * 86400000))
+        return vendas.filter(v => v.data_pedido >= from && v.data_pedido <= hoje)
+      }
+      case '15dias': {
+        const from = toDateStr(new Date(Date.now() - 15 * 86400000))
+        return vendas.filter(v => v.data_pedido >= from && v.data_pedido <= hoje)
+      }
+      case 'dia':
+        return vendas.filter(v => v.data_pedido === diaSelecionado)
+      case 'mes':
+        return vendas.filter(v => getMonthKey(v.data_pedido) === mesSelecionado)
+      default:
+        return vendas
+    }
+  }, [vendas, filterMode, mesSelecionado, diaSelecionado])
+
+  const subtitulo = useMemo(() => {
+    switch (filterMode) {
+      case 'hoje': return `Hoje (${formatDate(toDateStr(new Date()))}) - Relatorio Bling + CRM`
+      case '7dias': return 'Ultimos 7 dias - Relatorio Bling + CRM'
+      case '15dias': return 'Ultimos 15 dias - Relatorio Bling + CRM'
+      case 'dia': return `${formatDate(diaSelecionado)} - Relatorio Bling + CRM`
+      case 'mes': return `${getMonthLabel(mesSelecionado)} - Relatorio Bling + CRM`
+      default: return 'Todos os meses - Relatorio Bling + CRM'
+    }
+  }, [filterMode, mesSelecionado, diaSelecionado])
 
   const handlePeriodoDetectado = (meses: string[]) => {
     if (meses.length === 0) return
@@ -92,17 +126,56 @@ function App() {
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        <select
-          value={mesSelecionado}
-          onChange={e => setMesSelecionado(e.target.value)}
-          className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-        >
-          <option value="todos">Todos os meses</option>
-          {mesesDisponiveis.map(m => (
-            <option key={m.key} value={m.key}>{m.label}</option>
-          ))}
-        </select>
+      <div className="flex flex-wrap items-center gap-2">
+        {([
+          ['todos', 'Todos'],
+          ['hoje', 'Hoje'],
+          ['7dias', '7 dias'],
+          ['15dias', '15 dias'],
+          ['mes', 'Mes'],
+          ['dia', 'Dia'],
+        ] as [FilterMode, string][]).map(([mode, label]) => (
+          <button
+            key={mode}
+            onClick={() => {
+              setFilterMode(mode)
+              if (mode === 'mes' && !mesSelecionado && mesesDisponiveis.length > 0) {
+                setMesSelecionado(mesesDisponiveis[mesesDisponiveis.length - 1].key)
+              }
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filterMode === mode
+                ? 'bg-blue-500 text-white'
+                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+
+        {filterMode === 'mes' && (
+          <select
+            value={mesSelecionado}
+            onChange={e => setMesSelecionado(e.target.value)}
+            className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          >
+            {mesesDisponiveis.map(m => (
+              <option key={m.key} value={m.key}>{m.label}</option>
+            ))}
+          </select>
+        )}
+
+        {filterMode === 'dia' && (
+          <div className="flex items-center gap-1.5">
+            <CalendarDays className="w-4 h-4 text-slate-400" />
+            <input
+              type="date"
+              value={diaSelecionado}
+              onChange={e => setDiaSelecionado(e.target.value)}
+              className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            />
+          </div>
+        )}
       </div>
 
       <KPICards vendas={vendasFiltradas} />
