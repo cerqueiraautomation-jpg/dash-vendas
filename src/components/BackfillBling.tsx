@@ -40,7 +40,7 @@ export function BackfillBling({ onSyncComplete }: Props) {
     const end = new Date(dataFim + 'T12:00:00')
 
     while (current <= end) {
-      const windowEnd = new Date(current.getTime() + 14 * 86400000)
+      const windowEnd = new Date(current.getTime() + 29 * 86400000)
       const actualEnd = windowEnd > end ? end : windowEnd
 
       windows.push({
@@ -147,7 +147,7 @@ export function BackfillBling({ onSyncComplete }: Props) {
       )}
 
       <div className="border-t border-slate-700 pt-3 mt-1">
-        <div className="text-xs text-slate-400 mb-2">Backfill - Importar periodo historico</div>
+        <div className="text-xs text-slate-400 mb-2">Backfill - Importar periodo historico (janelas de 30 dias)</div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <label className="text-xs text-slate-500 block mb-1">Data Inicio</label>
