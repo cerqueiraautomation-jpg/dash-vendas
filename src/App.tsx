@@ -127,22 +127,32 @@ function App() {
       )}
 
       <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={filterMode === 'mes' ? mesSelecionado : ''}
+          onChange={e => {
+            setMesSelecionado(e.target.value)
+            setFilterMode('mes')
+          }}
+          className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+        >
+          <option value="" disabled>Selecionar mes</option>
+          {mesesDisponiveis.map(m => (
+            <option key={m.key} value={m.key}>{m.label}</option>
+          ))}
+        </select>
+
+        <div className="w-px h-6 bg-slate-700" />
+
         {([
           ['todos', 'Todos'],
           ['hoje', 'Hoje'],
           ['7dias', '7 dias'],
           ['15dias', '15 dias'],
-          ['mes', 'Mes'],
           ['dia', 'Dia'],
         ] as [FilterMode, string][]).map(([mode, label]) => (
           <button
             key={mode}
-            onClick={() => {
-              setFilterMode(mode)
-              if (mode === 'mes' && !mesSelecionado && mesesDisponiveis.length > 0) {
-                setMesSelecionado(mesesDisponiveis[mesesDisponiveis.length - 1].key)
-              }
-            }}
+            onClick={() => setFilterMode(mode)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filterMode === mode
                 ? 'bg-blue-500 text-white'
@@ -152,18 +162,6 @@ function App() {
             {label}
           </button>
         ))}
-
-        {filterMode === 'mes' && (
-          <select
-            value={mesSelecionado}
-            onChange={e => setMesSelecionado(e.target.value)}
-            className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-          >
-            {mesesDisponiveis.map(m => (
-              <option key={m.key} value={m.key}>{m.label}</option>
-            ))}
-          </select>
-        )}
 
         {filterMode === 'dia' && (
           <div className="flex items-center gap-1.5">
