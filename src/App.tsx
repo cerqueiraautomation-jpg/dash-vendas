@@ -25,6 +25,7 @@ function App() {
   const { historico, loading: historicoLoading, refetch: refetchHistorico } = useLeadHistorico()
   const [mesSelecionado, setMesSelecionado] = useState<string>('todos')
   const [showAdmin, setShowAdmin] = useState(false)
+  const [backfillDatas, setBackfillDatas] = useState<{ inicio: string; fim: string } | null>(null)
 
   const mesesDisponiveis = useMemo(() => {
     const keys = [...new Set(vendas.map(v => getMonthKey(v.data_pedido)))].sort()
@@ -39,6 +40,18 @@ function App() {
   const subtitulo = mesSelecionado === 'todos'
     ? 'Todos os meses - Relatorio Bling + CRM'
     : `${getMonthLabel(mesSelecionado)} - Relatorio Bling + CRM`
+
+  const handlePeriodoDetectado = (meses: string[]) => {
+    if (meses.length === 0) return
+    const sorted = [...meses].sort()
+    const primeiro = sorted[0]
+    const ultimo = sorted[sorted.length - 1]
+    const inicio = `${primeiro}-01`
+    const [y, m] = ultimo.split('-').map(Number)
+    const lastDay = new Date(y, m, 0).getDate()
+    const fim = `${ultimo}-${String(lastDay).padStart(2, '0')}`
+    setBackfillDatas({ inicio, fim })
+  }
 
   if (loading) {
     return (
@@ -74,8 +87,8 @@ function App() {
 
       {showAdmin && (
         <div className="space-y-4">
-          <BackfillBling onSyncComplete={refetchVendas} />
-          <UploadPlanilha onUploadComplete={refetchHistorico} />
+          <BackfillBling onSyncComplete={refetchVendas} autoFillDatas={backfillDatas} />
+          <UploadPlanilha onUploadComplete={refetchHistorico} onPeriodoDetectado={handlePeriodoDetectado} />
         </div>
       )}
 

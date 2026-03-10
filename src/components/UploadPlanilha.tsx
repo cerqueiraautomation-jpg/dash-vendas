@@ -17,9 +17,10 @@ type ParsedLead = {
 
 type Props = {
   onUploadComplete?: () => void
+  onPeriodoDetectado?: (meses: string[]) => void
 }
 
-export function UploadPlanilha({ onUploadComplete }: Props) {
+export function UploadPlanilha({ onUploadComplete, onPeriodoDetectado }: Props) {
   const [parsing, setParsing] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [parsed, setParsed] = useState<ParsedLead[] | null>(null)
@@ -52,7 +53,7 @@ export function UploadPlanilha({ onUploadComplete }: Props) {
         const dataAbertura = row['Data Abertura']
         const agente = String(row['Agente'] ?? '').trim()
         const primeiraMsg = String(
-          row['1\u00ba Mensagem'] ?? row['1\u00aa Mensagem'] ?? row['1º Mensagem'] ?? row['1ª Mensagem'] ?? ''
+          row['1\u00ba Mensagem'] ?? row['1\u00aa Mensagem'] ?? row['1\u00ba mensagem'] ?? row['1\u00aa mensagem'] ?? ''
         ).trim()
 
         if (!atendimentoId || !contato || !dataAbertura) continue
@@ -77,12 +78,16 @@ export function UploadPlanilha({ onUploadComplete }: Props) {
 
       setParsed(leads)
       setStats(originCounts)
+
+      // Detectar periodo e notificar o backfill
+      const meses = [...new Set(leads.map(l => l.mes_ano))].sort()
+      onPeriodoDetectado?.(meses)
     } catch (err) {
       setError(`Erro ao ler planilha: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setParsing(false)
     }
-  }, [])
+  }, [onPeriodoDetectado])
 
   const handleUpload = useCallback(async () => {
     if (!parsed) return

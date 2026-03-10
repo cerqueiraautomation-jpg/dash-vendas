@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Database, Loader2, CheckCircle2, AlertCircle, Play, RefreshCw } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -13,9 +13,10 @@ type WindowResult = {
 
 type Props = {
   onSyncComplete?: () => void
+  autoFillDatas?: { inicio: string; fim: string } | null
 }
 
-export function BackfillBling({ onSyncComplete }: Props) {
+export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [running, setRunning] = useState(false)
@@ -25,6 +26,13 @@ export function BackfillBling({ onSyncComplete }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [syncResult, setSyncResult] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (autoFillDatas) {
+      setDataInicio(autoFillDatas.inicio)
+      setDataFim(autoFillDatas.fim)
+    }
+  }, [autoFillDatas])
 
   const handleBackfill = useCallback(async () => {
     if (!dataInicio || !dataFim) return
@@ -72,7 +80,7 @@ export function BackfillBling({ onSyncComplete }: Props) {
 
         await new Promise(r => setTimeout(r, 2000))
       } catch (err) {
-        setError(`Erro na janela ${w.inicio} a ${w.fim}: ${err instanceof Error ? err.message : String(err)}`)
+        setError(`Erro na janela ${w.inicio} a ${w.fim}: ${err instanceof Error ? err.message : String(err)}`)        
         break
       }
     }
