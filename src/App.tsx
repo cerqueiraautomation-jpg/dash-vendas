@@ -21,18 +21,21 @@ function getMonthKey(dataPedido: string): string {
   return dataPedido.slice(0, 7)
 }
 
-function toDateStr(d: Date): string {
-  return d.toISOString().split('T')[0]
+function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
-type FilterMode = 'todos' | 'hoje' | '7dias' | '15dias' | 'dia' | 'mes'
+type FilterMode = 'todos' | '7dias' | '15dias' | 'dia' | 'mes'
 
 function App() {
   const { vendas, loading, refetch: refetchVendas } = useVendas()
   const { historico, loading: historicoLoading, refetch: refetchHistorico } = useLeadHistorico()
   const [filterMode, setFilterMode] = useState<FilterMode>('todos')
   const [mesSelecionado, setMesSelecionado] = useState<string>('')
-  const [diaSelecionado, setDiaSelecionado] = useState<string>(toDateStr(new Date()))
+  const [diaSelecionado, setDiaSelecionado] = useState<string>(toLocalDateStr(new Date()))
   const [showAdmin, setShowAdmin] = useState(false)
   const [backfillDatas, setBackfillDatas] = useState<{ inicio: string; fim: string } | null>(null)
 
@@ -42,17 +45,15 @@ function App() {
   }, [vendas])
 
   const vendasFiltradas = useMemo(() => {
-    const hoje = toDateStr(new Date())
+    const hoje = toLocalDateStr(new Date())
 
     switch (filterMode) {
-      case 'hoje':
-        return vendas.filter(v => v.data_pedido === hoje)
       case '7dias': {
-        const from = toDateStr(new Date(Date.now() - 7 * 86400000))
+        const from = toLocalDateStr(new Date(Date.now() - 7 * 86400000))
         return vendas.filter(v => v.data_pedido >= from && v.data_pedido <= hoje)
       }
       case '15dias': {
-        const from = toDateStr(new Date(Date.now() - 15 * 86400000))
+        const from = toLocalDateStr(new Date(Date.now() - 15 * 86400000))
         return vendas.filter(v => v.data_pedido >= from && v.data_pedido <= hoje)
       }
       case 'dia':
@@ -66,7 +67,6 @@ function App() {
 
   const subtitulo = useMemo(() => {
     switch (filterMode) {
-      case 'hoje': return `Hoje (${formatDate(toDateStr(new Date()))}) - Relatorio Bling + CRM`
       case '7dias': return 'Ultimos 7 dias - Relatorio Bling + CRM'
       case '15dias': return 'Ultimos 15 dias - Relatorio Bling + CRM'
       case 'dia': return `${formatDate(diaSelecionado)} - Relatorio Bling + CRM`
@@ -145,7 +145,6 @@ function App() {
 
         {([
           ['todos', 'Todos'],
-          ['hoje', 'Hoje'],
           ['7dias', '7 dias'],
           ['15dias', '15 dias'],
           ['dia', 'Dia'],
