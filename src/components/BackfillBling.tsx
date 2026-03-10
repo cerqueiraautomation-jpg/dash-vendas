@@ -23,6 +23,8 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
   const [syncing, setSyncing] = useState(false)
   const [progress, setProgress] = useState<WindowResult[]>([])
   const [currentWindow, setCurrentWindow] = useState('')
+  const [totalWindows, setTotalWindows] = useState(0)
+  const [completedWindows, setCompletedWindows] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [syncResult, setSyncResult] = useState<string | null>(null)
@@ -42,6 +44,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
     setError(null)
     setDone(false)
     setSyncResult(null)
+    setCompletedWindows(0)
 
     const windows: { inicio: string; fim: string }[] = []
     let current = new Date(dataInicio + 'T12:00:00')
@@ -59,7 +62,10 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
       current = new Date(actualEnd.getTime() + 86400000)
     }
 
-    for (const w of windows) {
+    setTotalWindows(windows.length)
+
+    for (let i = 0; i < windows.length; i++) {
+      const w = windows[i]
       setCurrentWindow(`${w.inicio} a ${w.fim}`)
 
       try {
@@ -69,6 +75,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
 
         if (fnError) throw fnError
 
+        setCompletedWindows(i + 1)
         setProgress(prev => [...prev, {
           periodo: `${w.inicio} a ${w.fim}`,
           fetched: data?.fetched_total ?? 0,
@@ -192,10 +199,28 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
         </div>
       </div>
 
-      {currentWindow && (
-        <div className="flex items-center gap-2 mt-3 text-orange-400 text-sm">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Processando: {currentWindow}
+      {running && totalWindows > 0 && (
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-orange-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Janela {completedWindows + 1} de {totalWindows}
+            </div>
+            <span className="text-slate-300 font-medium">
+              {Math.round((completedWindows / totalWindows) * 100)}%
+            </span>
+          </div>
+          <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${(completedWindows / totalWindows) * 100}%` }}
+            />
+          </div>
+          {currentWindow && (
+            <div className="text-xs text-slate-500">
+              Processando: {currentWindow}
+            </div>
+          )}
         </div>
       )}
 
