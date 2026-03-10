@@ -92,30 +92,17 @@ function App() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setMesSelecionado('todos')}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-            mesSelecionado === 'todos'
-              ? 'bg-blue-500 text-white'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
-          }`}
+      <div className="flex items-center gap-3">
+        <select
+          value={mesSelecionado}
+          onChange={e => setMesSelecionado(e.target.value)}
+          className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
         >
-          Todos
-        </button>
-        {mesesDisponiveis.map(m => (
-          <button
-            key={m.key}
-            onClick={() => setMesSelecionado(m.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              mesSelecionado === m.key
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
-            }`}
-          >
-            {m.label}
-          </button>
-        ))}
+          <option value="todos">Todos os meses</option>
+          {mesesDisponiveis.map(m => (
+            <option key={m.key} value={m.key}>{m.label}</option>
+          ))}
+        </select>
       </div>
 
       <KPICards vendas={vendasFiltradas} />
