@@ -11,7 +11,7 @@ Acompanhamento de todas as etapas do projeto.
 - [x] Tabela `token_bling` (sync OAuth2 via n8n a cada 4h)
 - [x] RLS configurado
 - [x] Indexes nas colunas de busca (data_pedido, pedido, telefone_normalizado)
-- [x] Edge Function `sync-bling-vendas` V5 com CORS + cron a cada 30min
+- [x] Edge Function `sync-bling-vendas` V13 com deteccao de origem 3-tier + vendedor CRM + cron a cada 30min
 
 ---
 
@@ -47,6 +47,8 @@ Acompanhamento de todas as etapas do projeto.
 - [x] `UploadPlanilha` - Upload XLSX do JetSales com parsing e insercao no Supabase
 - [x] `BackfillBling` - Importacao retroativa do Bling com janelas de 30 dias (CORS fix v5)
 - [x] `originDetector` - Deteccao de origem com 4 patterns (CTWA, Redirect, Linktree, Google/Site)
+- [x] `originMapper` - Mapping de referral_source/referral_data para origem (Tier 1 + 3)
+- [x] `fingerprintDetector` - Deteccao expandida com 22 patterns (Tier 2)
 
 ---
 
@@ -57,10 +59,12 @@ Acompanhamento de todas as etapas do projeto.
 
 ---
 
-## Etapa 6: Testes (83 testes)
+## Etapa 6: Testes (137 testes)
 
 - [x] `src/lib/originDetector.test.ts` - 53 testes (deteccao de origem de trafego)
 - [x] `src/utils/format.test.ts` - 30 testes (formatacao de valores e datas)
+- [x] `src/lib/originMapper.test.ts` - 26 testes (mapping referral_source + contacts.origin)
+- [x] `src/lib/fingerprintDetector.test.ts` - 28 testes (fingerprint expandido 22 patterns)
 
 ---
 
@@ -68,7 +72,31 @@ Acompanhamento de todas as etapas do projeto.
 
 - [x] Deploy na Vercel (cerqueiraautomation-jpg)
 - [x] Env vars configuradas (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
-- [x] URL: https://dash-vendas-three.vercel.app/
+- [x] URL: https://dash-vendas-theta.vercel.app/
+
+---
+
+## Etapa 8: Reestruturacao Deteccao de Origem v2 (19/03/2026)
+
+- [x] Analise de dados: 73,5% dos pedidos caiam como "Organico (sem origem)" na v11
+- [x] Nova logica 3-tier na Edge Function:
+  - Tier 1: `conversations.referral_source` + `referral_data` (tracking automatico CRM) — mais confiavel
+  - Tier 2: Fingerprint expandido (22 patterns vs 4 anteriores) — busca em TODAS as mensagens
+  - Tier 3: `contacts.origin` fallback (adicionou n8n, redirect, site, ctwa_ad)
+- [x] Vendedor CRM: quando Bling nao tem vendedor, puxa `conversations.assigned_to` → `profiles.full_name`
+- [x] Campanha rica: adset/segmento (AGRO, ENERGIA SOLAR, etc.) via `referral_data.utm_medium`
+- [x] Template detection: ignora `{{adset.name}}` como campanha invalida
+- [x] Funcoes puras testaveis: `originMapper.ts` + `fingerprintDetector.ts`
+- [x] Spec salvo em `docs/spec-origin-detection-v2.md`
+- [x] Reprocessamento completo de todo historico (Jan/2025 a Mar/2026)
+
+### Resultados do reprocessamento:
+| Metrica | Antes (v11) | Depois (v13) |
+|---------|-------------|-------------|
+| Com vendedor | 18% | **79,7%** |
+| Com origem rastreada | 26% | **40,3%** |
+| Com campanha | 1,1% | **10,4%** |
+| Novas origens detectadas | - | Indicacao, Instagram Organico, Instagram Stories, Emprega Mais, Automacao (n8n) |
 
 ---
 
