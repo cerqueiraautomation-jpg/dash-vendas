@@ -27,14 +27,6 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
   const comCRM = vendas.filter(v => v.tempo_compra_dias != null)
   const tempoMedio = comCRM.length > 0 ? comCRM.reduce((s, v) => s + (v.tempo_compra_dias ?? 0), 0) / comCRM.length : 0
 
-  const byVendedor = vendas.reduce((acc, v) => {
-    if (!acc[v.vendedor]) acc[v.vendedor] = { count: 0, valor: 0 }
-    acc[v.vendedor].count += 1
-    acc[v.vendedor].valor += v.valor
-    return acc
-  }, {} as Record<string, { count: number; valor: number }>)
-  const vendedorRanking = Object.entries(byVendedor).sort((a, b) => b[1].valor - a[1].valor)
-
   const pct = (n: number) => total > 0 ? ((n / total) * 100).toFixed(1) : '0'
   const sum = (arr: Venda[]) => arr.reduce((s, v) => s + v.valor, 0)
 
@@ -86,19 +78,6 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
             </div>
           </div>
 
-          <div className="bg-slate-900 rounded-lg p-3">
-            <div className="text-slate-400 mb-2 font-medium">Ranking Vendedores</div>
-            <div className="space-y-1">
-              {vendedorRanking.map(([nome, d], i) => (
-                <div key={nome} className="flex justify-between">
-                  <span className="text-slate-300">
-                    <span className={i === 0 ? 'text-yellow-400' : 'text-slate-500'}>{i + 1}.</span> {nome}
-                  </span>
-                  <span className="text-slate-400">{d.count}x = <span className="text-slate-200">{formatCurrency(d.valor)}</span></span>
-                </div>
-              ))}
-            </div>
-          </div>
 
           <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
             <div className="text-red-400 mb-1 font-medium">Gap de Atribuicao</div>

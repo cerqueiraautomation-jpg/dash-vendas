@@ -6,7 +6,6 @@ import { KPICards } from './components/KPICards'
 import { ChartMensal } from './components/ChartMensal'
 import { ResumoExecutivo } from './components/ResumoExecutivo'
 import { ChartOrigem } from './components/ChartOrigem'
-import { ChartVendedor } from './components/ChartVendedor'
 import { ChartDiario } from './components/ChartDiario'
 import { ChartTempoCRM } from './components/ChartTempoCRM'
 import { ChartDisparo } from './components/ChartDisparo'
@@ -15,194 +14,107 @@ import { ChartSegmentacao } from './components/ChartSegmentacao'
 import { DataTable } from './components/DataTable'
 import { UploadPlanilha } from './components/UploadPlanilha'
 import { BackfillBling } from './components/BackfillBling'
-import { getMonthLabel, formatDate } from './utils/format'
+import { getMonthLabel } from './utils/format'
 
-function getMonthKey(dataPedido: string): string {
-  return dataPedido.slice(0, 7)
-}
-
-function toLocalDateStr(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-type FilterMode = 'todos' | '7dias' | '15dias' | 'dia' | 'mes'
-
-function App() {
-  const { vendas, loading, refetch: refetchVendas } = useVendas()
-  const { historico, loading: historicoLoading, refetch: refetchHistorico } = useLeadHistorico()
-  const [filterMode, setFilterMode] = useState<FilterMode>('todos')
-  const [mesSelecionado, setMesSelecionado] = useState<string>('')
-  const [diaSelecionado, setDiaSelecionado] = useState<string>(toLocalDateStr(new Date()))
-  const [showAdmin, setShowAdmin] = useState(false)
-  const [backfillDatas, setBackfillDatas] = useState<{ inicio: string; fim: string } | null>(null)
+export default function App() {
+  const { vendas, loading, refetch } = useVendas()
+  const { historico, loading: historicoLoading } = useLeadHistorico()
+  const [mesSelecionado, setMesSelecionado] = useState('todos')
+  const [importOpen, setImportOpen] = useState(false)
 
   const mesesDisponiveis = useMemo(() => {
-    const keys = [...new Set(vendas.map(v => getMonthKey(v.data_pedido)))].sort()
-    return keys.map(k => ({ key: k, label: getMonthLabel(k) }))
+    const meses = [...new Set(vendas.map(v => v.data_pedido.slice(0, 7)))].sort()
+    return meses
   }, [vendas])
 
   const vendasFiltradas = useMemo(() => {
-    const hoje = toLocalDateStr(new Date())
-
-    switch (filterMode) {
-      case '7dias': {
-        const from = toLocalDateStr(new Date(Date.now() - 7 * 86400000))
-        return vendas.filter(v => v.data_pedido >= from && v.data_pedido <= hoje)
-      }
-      case '15dias': {
-        const from = toLocalDateStr(new Date(Date.now() - 15 * 86400000))
-        return vendas.filter(v => v.data_pedido >= from && v.data_pedido <= hoje)
-      }
-      case 'dia':
-        return vendas.filter(v => v.data_pedido === diaSelecionado)
-      case 'mes':
-        return vendas.filter(v => getMonthKey(v.data_pedido) === mesSelecionado)
-      default:
-        return vendas
+    if (mesSelecionado === 'todos') return vendas
+    if (Array.isArray(mesSelecionado)) {
+      return vendas.filter(v => (mesSelecionado as string[]).includes(v.data_pedido.slice(0, 7)))
     }
-  }, [vendas, filterMode, mesSelecionado, diaSelecionado])
-
-  const subtitulo = useMemo(() => {
-    switch (filterMode) {
-      case '7dias': return 'Ultimos 7 dias - Relatorio Bling + CRM'
-      case '15dias': return 'Ultimos 15 dias - Relatorio Bling + CRM'
-      case 'dia': return `${formatDate(diaSelecionado)} - Relatorio Bling + CRM`
-      case 'mes': return `${getMonthLabel(mesSelecionado)} - Relatorio Bling + CRM`
-      default: return 'Todos os meses - Relatorio Bling + CRM'
-    }
-  }, [filterMode, mesSelecionado, diaSelecionado])
-
-  const handlePeriodoDetectado = (meses: string[]) => {
-    if (meses.length === 0) return
-    const sorted = [...meses].sort()
-    const primeiro = sorted[0]
-    const ultimo = sorted[sorted.length - 1]
-    const inicio = `${primeiro}-01`
-    const [y, m] = ultimo.split('-').map(Number)
-    const lastDay = new Date(y, m, 0).getDate()
-    const fim = `${ultimo}-${String(lastDay).padStart(2, '0')}`
-    setBackfillDatas({ inicio, fim })
-  }
+    return vendas.filter(v => v.data_pedido.startsWith(mesSelecionado))
+  }, [vendas, mesSelecionado])
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-slate-400 text-lg">Carregando dados...</div>
+      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+          <p className="text-slate-400">Carregando dados...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 max-w-[1400px] mx-auto space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-xl font-bold">Dashboard de Vendas</h1>
-          <p className="text-sm text-slate-400">{subtitulo}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowAdmin(!showAdmin)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              showAdmin
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
-            }`}
-          >
-            {showAdmin ? 'Fechar Painel' : 'Importar Dados'}
-          </button>
-          <div className="text-xs text-slate-500">
-            {vendasFiltradas.length} registros
+    <div className="min-h-screen bg-slate-900 text-white">
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold">Dashboard Vendas</h1>
+            <p className="text-xs text-slate-400">
+              Bling x CRM Space
+              {mesSelecionado !== 'todos'
+                ? ` — ${Array.isArray(mesSelecionado)
+                    ? (mesSelecionado as string[]).map(m => getMonthLabel(m)).join(', ')
+                    : getMonthLabel(mesSelecionado)}`
+                : ` — Todos os meses (${mesesDisponiveis.length})`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-slate-400" />
+            <select
+              value={mesSelecionado}
+              onChange={e => setMesSelecionado(e.target.value)}
+              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+            >
+              <option value="todos">Todos os meses</option>
+              {mesesDisponiveis.map(m => (
+                <option key={m} value={m}>{getMonthLabel(m)}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setImportOpen(!importOpen)}
+              className="px-3 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded-lg hover:bg-slate-700"
+            >
+              {importOpen ? 'Fechar' : 'Importar Dados'}
+            </button>
           </div>
         </div>
-      </div>
 
-      {showAdmin && (
-        <div className="space-y-4">
-          <BackfillBling onSyncComplete={refetchVendas} autoFillDatas={backfillDatas} />
-          <UploadPlanilha onUploadComplete={refetchHistorico} onPeriodoDetectado={handlePeriodoDetectado} />
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={filterMode === 'mes' ? mesSelecionado : ''}
-          onChange={e => {
-            setMesSelecionado(e.target.value)
-            setFilterMode('mes')
-          }}
-          className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-        >
-          <option value="" disabled>Selecionar mes</option>
-          {mesesDisponiveis.map(m => (
-            <option key={m.key} value={m.key}>{m.label}</option>
-          ))}
-        </select>
-
-        <div className="w-px h-6 bg-slate-700" />
-
-        {([
-          ['todos', 'Todos'],
-          ['7dias', '7 dias'],
-          ['15dias', '15 dias'],
-          ['dia', 'Dia'],
-        ] as [FilterMode, string][]).map(([mode, label]) => (
-          <button
-            key={mode}
-            onClick={() => setFilterMode(mode)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filterMode === mode
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-
-        {filterMode === 'dia' && (
-          <div className="flex items-center gap-1.5">
-            <CalendarDays className="w-4 h-4 text-slate-400" />
-            <input
-              type="date"
-              value={diaSelecionado}
-              onChange={e => setDiaSelecionado(e.target.value)}
-              className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            />
+        {importOpen && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <UploadPlanilha />
+            <BackfillBling onComplete={refetch} />
           </div>
         )}
-      </div>
 
-      <KPICards vendas={vendasFiltradas} />
+        <KPICards vendas={vendasFiltradas} />
 
-      <ChartMensal vendas={vendas} />
+        <ChartMensal vendas={vendasFiltradas} />
 
-      <ChartSegmentacao
-        vendas={vendasFiltradas}
-        historico={historico}
-        historicoLoading={historicoLoading}
-      />
+        <ChartSegmentacao
+          vendas={vendasFiltradas}
+          historico={historico}
+          historicoLoading={historicoLoading}
+        />
 
-      <ResumoExecutivo vendas={vendasFiltradas} mesSelecionado={mesSelecionado} />
+        <ResumoExecutivo vendas={vendasFiltradas} mesSelecionado={mesSelecionado} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChartOrigem vendas={vendasFiltradas} />
-        <ChartVendedor vendas={vendasFiltradas} />
+
+        <ChartDiario vendas={vendasFiltradas} />
+
+        <ChartTempoCRM vendas={vendasFiltradas} />
+
+        <ChartDisparo vendas={vendasFiltradas} />
+
+        <ChartCampanha vendas={vendasFiltradas} />
+
+        <DataTable vendas={vendasFiltradas} />
+
       </div>
-
-      <ChartDiario vendas={vendasFiltradas} />
-
-      <ChartTempoCRM vendas={vendasFiltradas} />
-
-      <ChartDisparo vendas={vendasFiltradas} />
-
-      <ChartCampanha vendas={vendasFiltradas} />
-
-      <DataTable vendas={vendasFiltradas} />
     </div>
   )
 }
-
-export default App

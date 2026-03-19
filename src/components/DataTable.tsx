@@ -12,10 +12,7 @@ export function DataTable({ vendas }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('data_pedido')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [filterOrigem, setFilterOrigem] = useState('')
-  const [filterVendedor, setFilterVendedor] = useState('')
-
   const origens = useMemo(() => [...new Set(vendas.map(v => v.origem))].sort(), [vendas])
-  const vendedores = useMemo(() => [...new Set(vendas.map(v => v.vendedor))].sort(), [vendas])
 
   const filtered = useMemo(() => {
     let result = vendas
@@ -24,8 +21,6 @@ export function DataTable({ vendas }: Props) {
       result = result.filter(v => v.nome.toLowerCase().includes(s) || v.pedido.includes(s))
     }
     if (filterOrigem) result = result.filter(v => v.origem === filterOrigem)
-    if (filterVendedor) result = result.filter(v => v.vendedor === filterVendedor)
-
     result.sort((a, b) => {
       const av = a[sortKey]
       const bv = b[sortKey]
@@ -37,7 +32,7 @@ export function DataTable({ vendas }: Props) {
       return 0
     })
     return result
-  }, [vendas, search, filterOrigem, filterVendedor, sortKey, sortDir])
+  }, [vendas, search, filterOrigem, sortKey, sortDir])
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -84,14 +79,6 @@ export function DataTable({ vendas }: Props) {
             <option value="">Todas origens</option>
             {origens.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
-          <select
-            value={filterVendedor}
-            onChange={e => setFilterVendedor(e.target.value)}
-            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-blue-500"
-          >
-            <option value="">Todos vendedores</option>
-            {vendedores.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
         </div>
         <div className="flex gap-4 mt-2 text-xs text-slate-400">
           <span>{filtered.length} pedidos</span>
@@ -108,7 +95,6 @@ export function DataTable({ vendas }: Props) {
                 ['valor', 'Valor'],
                 ['data_pedido', 'Data'],
                 ['origem', 'Origem'],
-                ['vendedor', 'Vendedor'],
                 ['tempo_compra_dias', 'Tempo CRM'],
                 ['recebeu_disparo', 'Disparo'],
                 ['comprou_apos_disparo', 'Conv.'],
@@ -135,7 +121,6 @@ export function DataTable({ vendas }: Props) {
                     {v.origem}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-slate-300">{v.vendedor}</td>
                 <td className="px-3 py-2 text-slate-400">{v.tempo_compra_dias != null ? `${v.tempo_compra_dias}d` : '-'}</td>
                 <td className="px-3 py-2">
                   {v.recebeu_disparo
