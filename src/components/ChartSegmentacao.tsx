@@ -48,6 +48,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
   const [contactPhones, setContactPhones] = useState<Map<string, string>>(new Map())
   const [loadingContacts, setLoadingContacts] = useState(true)
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null)
+  const [campanhasExpanded, setCampanhasExpanded] = useState(false)
 
   useEffect(() => {
     const contactIds = [...new Set(
@@ -301,9 +302,22 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       {/* Campanha breakdown - mostra de onde veio o trafego */}
       {campanhaBreakdown.length > 0 && (
         <div className="mt-4 pt-4 border-t border-white/5">
-          <h3 className="text-xs font-medium text-slate-400 mb-2">Origem do Trafego (campanhas e canais)</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-medium text-slate-400">
+              Origem do Trafego ({campanhaBreakdown.length} campanhas e canais)
+            </h3>
+            {campanhaBreakdown.length > 9 && (
+              <button
+                onClick={() => setCampanhasExpanded(prev => !prev)}
+                className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+              >
+                {campanhasExpanded ? 'Ver menos' : `Ver todas (${campanhaBreakdown.length})`}
+                <ChevronDown className={`w-3 h-3 transition-transform ${campanhasExpanded ? 'rotate-180' : ''}`} />
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {campanhaBreakdown.slice(0, 9).map(c => {
+            {(campanhasExpanded ? campanhaBreakdown : campanhaBreakdown.slice(0, 9)).map(c => {
               const pct = total > 0 ? ((c.count / total) * 100).toFixed(1) : '0'
               return (
                 <div key={c.campanha} className="bg-white/[0.02] rounded-lg p-2.5">
@@ -316,9 +330,6 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
               )
             })}
           </div>
-          {campanhaBreakdown.length > 9 && (
-            <p className="text-[11px] text-slate-600 mt-2">+ {campanhaBreakdown.length - 9} campanhas</p>
-          )}
         </div>
       )}
 
