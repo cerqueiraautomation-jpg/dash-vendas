@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { ChevronDown, X } from 'lucide-react'
 import type { Venda, LeadHistorico } from '../lib/supabase'
@@ -22,7 +22,7 @@ const SEGMENT_COLORS: Record<string, string> = {
 }
 
 export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props) {
-  const [janela, setJanela] = useState(90)
+  const janela = 90
   const [contactPhones, setContactPhones] = useState<Map<string, string>>(new Map())
   const [loadingContacts, setLoadingContacts] = useState(true)
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null)
@@ -184,26 +184,9 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
 
   return (
     <div className="glass-card rounded-xl p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-sm font-semibold">Segmentacao de Clientes</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Janela de atribuicao: {janela} dias</p>
-        </div>
-        <div className="flex gap-1">
-          {[30, 60, 90].map(d => (
-            <button
-              key={d}
-              onClick={() => setJanela(d)}
-              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                janela === d
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-              }`}
-            >
-              {d}d
-            </button>
-          ))}
-        </div>
+      <div className="mb-4">
+        <h2 className="text-sm font-semibold">Segmentacao de Clientes</h2>
+        <p className="text-xs text-slate-500 mt-0.5">{total} vendas classificadas</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

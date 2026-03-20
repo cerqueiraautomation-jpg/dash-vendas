@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { CalendarDays } from 'lucide-react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { CalendarDays, ChevronDown } from 'lucide-react'
 import { useVendas } from './hooks/useVendas'
 import { useLeadHistorico } from './hooks/useLeadHistorico'
 import { KPICards } from './components/KPICards'
@@ -37,6 +37,18 @@ function App() {
   const [diaSelecionado, setDiaSelecionado] = useState<string>(toLocalDateStr(new Date()))
   const [showAdmin, setShowAdmin] = useState(false)
   const [backfillDatas, setBackfillDatas] = useState<{ inicio: string; fim: string } | null>(null)
+  const [mesDropdownOpen, setMesDropdownOpen] = useState(false)
+  const mesDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (mesDropdownRef.current && !mesDropdownRef.current.contains(e.target as Node)) {
+        setMesDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const mesesDisponiveis = useMemo(() => {
     const keys = [...new Set(vendas.map(v => getMonthKey(v.data_pedido)))].sort()
@@ -128,19 +140,43 @@ function App() {
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={filterMode === 'mes' ? mesSelecionado : ''}
-          onChange={e => {
-            setMesSelecionado(e.target.value)
-            setFilterMode('mes')
-          }}
-          className="glass text-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
-        >
-          <option value="" disabled>Selecionar mes</option>
-          {mesesDisponiveis.map(m => (
-            <option key={m.key} value={m.key}>{m.label}</option>
-          ))}
-        </select>
+        <div className="relative" ref={mesDropdownRef}>
+          <button
+            onClick={() => setMesDropdownOpen(prev => !prev)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              filterMode === 'mes'
+                ? 'bg-blue-500/80 text-white shadow-lg shadow-blue-500/20'
+                : 'glass text-slate-300 hover:text-slate-100'
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            {filterMode === 'mes' && mesSelecionado
+              ? mesesDisponiveis.find(m => m.key === mesSelecionado)?.label ?? 'Mes'
+              : 'Mes'}
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mesDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {mesDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 z-50 min-w-[160px] max-h-64 overflow-y-auto glass-card rounded-lg py-1 shadow-xl shadow-black/30">
+              {mesesDisponiveis.map(m => (
+                <button
+                  key={m.key}
+                  onClick={() => {
+                    setMesSelecionado(m.key)
+                    setFilterMode('mes')
+                    setMesDropdownOpen(false)
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                    mesSelecionado === m.key && filterMode === 'mes'
+                      ? 'bg-blue-500/20 text-blue-300 font-medium'
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="w-px h-6 bg-white/5" />
 
