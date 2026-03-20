@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, CartesianGrid } from 'recharts'
 import { Zap, TrendingUp, Clock, AlertTriangle } from 'lucide-react'
 import type { Venda } from '../lib/supabase'
 import { formatCurrency } from '../utils/format'
@@ -47,6 +47,7 @@ export function ChartDisparo({ vendas }: Props) {
 
   // Barras de comparacao
   const barColors = ['#64748b', '#ef4444', '#22c55e']
+  const barColorsDark = ['#334155', '#991b1b', '#166534']
   const grupoData = [
     { name: 'Sem disparo', count: semDisparo.length, valor: faturamentoSem, ticket: semDisparo.length > 0 ? faturamentoSem / semDisparo.length : 0 },
     { name: 'Disparo \u2192 NAO', count: naoConverteram.length, valor: faturamentoNAO, ticket: naoConverteram.length > 0 ? faturamentoNAO / naoConverteram.length : 0 },
@@ -59,7 +60,7 @@ export function ChartDisparo({ vendas }: Props) {
 
       {/* KPIs do disparo */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-slate-900 rounded-lg p-3">
+        <div className="bg-white/[0.03] rounded-lg p-3" style={{ boxShadow: '0 0 12px rgba(234,179,8,0.05)' }}>
           <div className="flex items-center gap-2 mb-1">
             <Zap className="w-3.5 h-3.5 text-yellow-400" />
             <span className="text-xs text-slate-400">Receberam disparo</span>
@@ -67,7 +68,7 @@ export function ChartDisparo({ vendas }: Props) {
           <div className="text-xl font-bold">{comDisparo.length} <span className="text-sm text-slate-500">/ {total}</span></div>
           <div className="text-xs text-slate-500">{total > 0 ? ((comDisparo.length / total) * 100).toFixed(1) : 0}% dos compradores</div>
         </div>
-        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+        <div className="bg-white/[0.03] border border-green-500/20 rounded-lg p-3" style={{ boxShadow: '0 0 12px rgba(34,197,94,0.08)' }}>
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="w-3.5 h-3.5 text-green-400" />
             <span className="text-xs text-slate-400">Converteram apos</span>
@@ -75,7 +76,7 @@ export function ChartDisparo({ vendas }: Props) {
           <div className="text-xl font-bold text-green-400">{converteram.length}</div>
           <div className="text-xs text-green-400/70">{taxaConversao.toFixed(1)}% taxa de conversao</div>
         </div>
-        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+        <div className="bg-white/[0.03] border border-green-500/20 rounded-lg p-3" style={{ boxShadow: '0 0 12px rgba(34,197,94,0.08)' }}>
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="w-3.5 h-3.5 text-green-400" />
             <span className="text-xs text-slate-400">Faturamento pos-disparo</span>
@@ -83,7 +84,7 @@ export function ChartDisparo({ vendas }: Props) {
           <div className="text-xl font-bold text-green-400">{formatCurrency(faturamentoSIM)}</div>
           <div className="text-xs text-slate-500">Ticket: {formatCurrency(converteram.length > 0 ? faturamentoSIM / converteram.length : 0)}</div>
         </div>
-        <div className="bg-slate-900 rounded-lg p-3">
+        <div className="bg-white/[0.03] rounded-lg p-3" style={{ boxShadow: '0 0 12px rgba(59,130,246,0.05)' }}>
           <div className="flex items-center gap-2 mb-1">
             <Clock className="w-3.5 h-3.5 text-blue-400" />
             <span className="text-xs text-slate-400">Tempo medio conversao</span>
@@ -107,7 +108,7 @@ export function ChartDisparo({ vendas }: Props) {
                 <Tooltip
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={((val: number) => val) as any}
-                  contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ background: '#141b2d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -131,15 +132,24 @@ export function ChartDisparo({ vendas }: Props) {
           <div className="h-48">
             <ResponsiveContainer>
               <BarChart data={grupoData}>
+                <defs>
+                  {barColors.map((color, i) => (
+                    <linearGradient key={`grpGrad-${i}`} id={`grpGrad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={color} stopOpacity={1} />
+                      <stop offset="100%" stopColor={barColorsDark[i]} stopOpacity={0.8} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                 <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 9 }} />
                 <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={((val: number) => formatCurrency(val)) as any}
-                  contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ background: '#141b2d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }}
                 />
                 <Bar dataKey="valor" radius={[4, 4, 0, 0]}>
-                  {grupoData.map((_, i) => <Cell key={i} fill={barColors[i]} />)}
+                  {grupoData.map((_, i) => <Cell key={i} fill={`url(#grpGrad-${i})`} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -163,14 +173,21 @@ export function ChartDisparo({ vendas }: Props) {
           <div className="h-48">
             <ResponsiveContainer>
               <BarChart data={diasData}>
+                <defs>
+                  <linearGradient id="diasGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#eab308" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#854d0e" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                 <XAxis dataKey="dia" tick={{ fill: '#94a3b8', fontSize: 10 }} />
                 <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} />
                 <Tooltip
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={((val: number, name: string) => [name === 'valor' ? formatCurrency(val) : val, name === 'valor' ? 'Faturamento' : 'Conversoes']) as any}
-                  contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ background: '#141b2d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }}
                 />
-                <Bar dataKey="count" name="Conversoes" fill="#eab308" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" name="Conversoes" fill="url(#diasGrad)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

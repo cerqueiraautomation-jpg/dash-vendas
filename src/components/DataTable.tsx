@@ -40,21 +40,23 @@ export function DataTable({ vendas }: Props) {
   }
 
   const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return null
-    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+    if (sortKey !== col) return <ChevronDown className="w-3 h-3 opacity-0 group-hover:opacity-30 transition-opacity" />
+    return sortDir === 'asc'
+      ? <ChevronUp className="w-3 h-3 text-blue-400" />
+      : <ChevronDown className="w-3 h-3 text-blue-400" />
   }
 
   const totalFiltered = filtered.reduce((s, v) => s + v.valor, 0)
 
   const origemBg: Record<string, string> = {
-    'Organico (sem origem)': 'bg-blue-500/20 text-blue-300',
-    'Organico (WhatsApp)': 'bg-green-500/20 text-green-300',
-    'Cadastro Manual': 'bg-purple-500/20 text-purple-300',
-    'Meta Redirect': 'bg-orange-500/20 text-orange-300',
-    'Meta CTWA': 'bg-yellow-500/20 text-yellow-300',
-    'Meta Direto': 'bg-red-500/20 text-red-300',
-    'Nao encontrado': 'bg-slate-500/20 text-slate-300',
-    'Linktree': 'bg-cyan-500/20 text-cyan-300',
+    'Organico (sem origem)': 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 text-blue-300',
+    'Organico (WhatsApp)': 'bg-gradient-to-r from-green-500/20 to-green-600/10 text-green-300',
+    'Cadastro Manual': 'bg-gradient-to-r from-purple-500/20 to-purple-600/10 text-purple-300',
+    'Meta Redirect': 'bg-gradient-to-r from-orange-500/20 to-orange-600/10 text-orange-300',
+    'Meta CTWA': 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 text-yellow-300',
+    'Meta Direto': 'bg-gradient-to-r from-red-500/20 to-red-600/10 text-red-300',
+    'Nao encontrado': 'bg-gradient-to-r from-slate-500/20 to-slate-600/10 text-slate-300',
+    'Linktree': 'bg-gradient-to-r from-cyan-500/20 to-cyan-600/10 text-cyan-300',
   }
 
   return (
@@ -68,13 +70,13 @@ export function DataTable({ vendas }: Props) {
               placeholder="Buscar por nome ou pedido..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 bg-white/[0.03] border border-white/5 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/30 transition-colors"
             />
           </div>
           <select
             value={filterOrigem}
             onChange={e => setFilterOrigem(e.target.value)}
-            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+            className="px-3 py-2 bg-white/[0.03] border border-white/5 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/30 transition-colors"
           >
             <option value="">Todas origens</option>
             {origens.map(o => <option key={o} value={o}>{o}</option>)}
@@ -85,10 +87,10 @@ export function DataTable({ vendas }: Props) {
           <span>{formatCurrency(totalFiltered)}</span>
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto scroll-smooth">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-slate-700 text-slate-400">
+            <tr className="border-b border-white/[0.03] bg-white/[0.02]">
               {([
                 ['pedido', 'Pedido'],
                 ['nome', 'Nome'],
@@ -101,7 +103,7 @@ export function DataTable({ vendas }: Props) {
               ] as [SortKey, string][]).map(([key, label]) => (
                 <th
                   key={key}
-                  className="px-3 py-2.5 text-left cursor-pointer hover:text-slate-200 whitespace-nowrap select-none"
+                  className="group px-3 py-2.5 text-left cursor-pointer hover:text-slate-200 whitespace-nowrap select-none text-slate-500 uppercase text-[10px] tracking-wider font-medium"
                   onClick={() => toggleSort(key)}
                 >
                   <span className="flex items-center gap-1">{label}<SortIcon col={key} /></span>
@@ -110,14 +112,14 @@ export function DataTable({ vendas }: Props) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(v => (
-              <tr key={v.pedido} className="border-b border-slate-700/50 hover:bg-slate-700/30">
+            {filtered.map((v, i) => (
+              <tr key={v.pedido} className={`border-b border-white/[0.03] hover:bg-white/[0.03] transition-colors ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}>
                 <td className="px-3 py-2 text-slate-400">{v.pedido}</td>
                 <td className="px-3 py-2 max-w-[200px] truncate" title={v.nome}>{v.nome}</td>
-                <td className="px-3 py-2 font-medium text-green-400">{formatCurrency(v.valor)}</td>
+                <td className="px-3 py-2 font-medium text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-300">{formatCurrency(v.valor)}</td>
                 <td className="px-3 py-2 text-slate-400 whitespace-nowrap">{formatDate(v.data_pedido)}</td>
                 <td className="px-3 py-2">
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${origemBg[v.origem] || 'bg-slate-600/30'}`}>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${origemBg[v.origem] || 'bg-gradient-to-r from-slate-600/30 to-slate-700/20 text-slate-400'}`}>
                     {v.origem}
                   </span>
                 </td>

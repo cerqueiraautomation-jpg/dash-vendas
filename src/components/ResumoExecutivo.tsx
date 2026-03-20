@@ -38,9 +38,9 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
 
         <div className="space-y-3">
-          <div className="bg-slate-900 rounded-lg p-3">
-            <div className="text-slate-400 mb-2 font-medium">Visao Geral</div>
-            <div className="space-y-1">
+          <div className="bg-white/[0.03] rounded-xl p-3">
+            <div className="border-l-2 border-blue-500/30 pl-2 text-slate-400 mb-2 font-medium">Visao Geral</div>
+            <div className="space-y-1.5">
               <Row label="Total de pedidos" value={`${total}`} />
               <Row label="Faturamento total" value={formatCurrency(faturamento)} highlight />
               <Row label="Ticket medio" value={formatCurrency(faturamento / total)} />
@@ -48,13 +48,13 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
             </div>
           </div>
 
-          <div className="bg-slate-900 rounded-lg p-3">
-            <div className="text-slate-400 mb-2 font-medium">Origem das Vendas</div>
-            <div className="space-y-1">
+          <div className="bg-white/[0.03] rounded-xl p-3">
+            <div className="border-l-2 border-blue-500/30 pl-2 text-slate-400 mb-2 font-medium">Origem das Vendas</div>
+            <div className="space-y-1.5">
               <Row label={`Organico (sem origem + WhatsApp)`} value={`${origemGroups.organico.length} vendas (${pct(origemGroups.organico.length)}%) = ${formatCurrency(sum(origemGroups.organico))}`} />
               <Row label="Cadastro Manual" value={`${origemGroups.cadastro.length} vendas (${pct(origemGroups.cadastro.length)}%) = ${formatCurrency(sum(origemGroups.cadastro))}`} />
               <Row label="Meta Ads (total)" value={`${origemGroups.meta.length} vendas (${pct(origemGroups.meta.length)}%) = ${formatCurrency(sum(origemGroups.meta))}`} highlight />
-              <div className="pl-3 border-l border-slate-700 space-y-1 mt-1">
+              <div className="pl-3 border-l-2 border-purple-500/30 space-y-1.5 mt-1">
                 <Row label="Meta Redirect (UTM)" value={`${metaRedirect.length}x = ${formatCurrency(sum(metaRedirect))}`} />
                 <Row label="Meta CTWA (Click-to-WhatsApp)" value={`${metaCTWA.length}x = ${formatCurrency(sum(metaCTWA))}`} />
                 <Row label="Meta Direto" value={`${metaDireto.length}x = ${formatCurrency(sum(metaDireto))}`} />
@@ -67,9 +67,9 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
         </div>
 
         <div className="space-y-3">
-          <div className="bg-slate-900 rounded-lg p-3">
-            <div className="text-slate-400 mb-2 font-medium">Impacto dos Disparos</div>
-            <div className="space-y-1">
+          <div className="bg-white/[0.03] rounded-xl p-3">
+            <div className="border-l-2 border-blue-500/30 pl-2 text-slate-400 mb-2 font-medium">Impacto dos Disparos</div>
+            <div className="space-y-1.5">
               <Row label="Receberam disparo" value={`${comDisparo.length} de ${total} (${pct(comDisparo.length)}%)`} />
               <Row label="Compraram APOS disparo" value={`${converteram.length} (${comDisparo.length > 0 ? ((converteram.length / comDisparo.length) * 100).toFixed(1) : 0}% de conversao)`} highlight />
               <Row label="Faturamento pos-disparo" value={formatCurrency(sum(converteram))} highlight />
@@ -79,7 +79,7 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
           </div>
 
 
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+          <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-3">
             <div className="text-red-400 mb-1 font-medium">Gap de Atribuicao</div>
             <div className="text-slate-300">
               {origemGroups.naoEncontrado.length} vendas ({pct(origemGroups.naoEncontrado.length)}%) nao foram encontradas no CRM.
@@ -94,9 +94,9 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
 
 function Row({ label, value, highlight, warn }: { label: string; value: string; highlight?: boolean; warn?: boolean }) {
   return (
-    <div className="flex justify-between gap-2">
+    <div className="flex justify-between gap-2 hover:bg-white/[0.02] rounded-md px-1 -mx-1 transition-colors">
       <span className="text-slate-400">{label}</span>
-      <span className={`text-right shrink-0 ${highlight ? 'text-green-400 font-medium' : warn ? 'text-red-400' : 'text-slate-200'}`}>{value}</span>
+      <span className={`text-right shrink-0 ${highlight ? 'gradient-text-green text-sm font-semibold' : warn ? 'text-red-400 text-sm font-semibold drop-shadow-[0_0_6px_rgba(239,68,68,0.3)]' : 'text-slate-200'}`}>{value}</span>
     </div>
   )
 }
