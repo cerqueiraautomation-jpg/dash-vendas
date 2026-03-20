@@ -21,17 +21,18 @@ type VendaComSegmento = Venda & {
 
 const SEGMENT_COLORS: Record<string, string> = {
   'Novo Trafego': '#8b5cf6',
+  'Novo Linktree': '#06b6d4',
   'Novo Organico': '#22c55e',
   'Recompra Trafego': '#f59e0b',
+  'Recompra Linktree': '#0891b2',
   'Recompra Organico': '#3b82f6',
 }
 
-/** Origens que indicam trafego pago/rastreado */
+/** Origens que indicam trafego pago */
 const ORIGENS_TRAFEGO = [
   'Meta CTWA',
   'Meta Redirect',
   'Meta Direto',
-  'Linktree',
   'Google/Site',
   'Instagram Organico',
   'Instagram Stories',
@@ -41,6 +42,10 @@ const ORIGENS_TRAFEGO = [
 
 function isOrigemTrafego(origem: string): boolean {
   return ORIGENS_TRAFEGO.includes(origem)
+}
+
+function isOrigemLinktree(origem: string): boolean {
+  return origem === 'Linktree'
 }
 
 export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props) {
@@ -117,8 +122,10 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
 
     const counts: Record<string, { count: number; valor: number }> = {
       'Novo Trafego': { count: 0, valor: 0 },
+      'Novo Linktree': { count: 0, valor: 0 },
       'Novo Organico': { count: 0, valor: 0 },
       'Recompra Trafego': { count: 0, valor: 0 },
+      'Recompra Linktree': { count: 0, valor: 0 },
       'Recompra Organico': { count: 0, valor: 0 },
     }
 
@@ -128,17 +135,20 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
     for (const v of vendas) {
       const nomeKey = v.nome.toLowerCase().trim()
       const isRecompra = (comprasPorNome.get(nomeKey) ?? 1) > 1
-      let teveTrafego = false
+      let canal: 'trafego' | 'linktree' | 'organico' = 'organico'
       let matchSource: MatchSource = null
 
       // 1. Campo origem da venda (fonte mais direta)
       if (isOrigemTrafego(v.origem)) {
-        teveTrafego = true
+        canal = 'trafego'
+        matchSource = 'origem'
+      } else if (isOrigemLinktree(v.origem)) {
+        canal = 'linktree'
         matchSource = 'origem'
       }
 
-      // 2. Match por telefone no historico (complementar)
-      if (!teveTrafego) {
+      // 2. Match por telefone no historico (complementar, só se ainda organico)
+      if (canal === 'organico') {
         const phone = v.contact_id ? contactPhones.get(v.contact_id) : undefined
         let trafegoEntries: LeadHistorico[] | undefined
 
@@ -152,7 +162,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
               return diffDays >= 0 && diffDays <= janela
             })
             if (match) {
-              teveTrafego = true
+              canal = 'trafego'
               matchSource = 'telefone'
             }
           }
@@ -160,7 +170,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       }
 
       // 3. Fallback: match por nome exato no historico
-      if (!teveTrafego && nomeKey.length >= 5) {
+      if (canal === 'organico' && nomeKey.length >= 5) {
         const trafegoEntries = nomeExatoToHistorico.get(nomeKey)
         if (trafegoEntries) {
           const dataPedido = new Date(v.data_pedido + 'T12:00:00')
@@ -170,22 +180,25 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
             return diffDays >= 0 && diffDays <= janela
           })
           if (match) {
-            teveTrafego = true
+            canal = 'trafego'
             matchSource = 'nome'
           }
         }
       }
 
-      const segment = isRecompra
-        ? (teveTrafego ? 'Recompra Trafego' : 'Recompra Organico')
-        : (teveTrafego ? 'Novo Trafego' : 'Novo Organico')
+      const segmentMap: Record<string, Record<string, string>> = {
+        trafego: { novo: 'Novo Trafego', recompra: 'Recompra Trafego' },
+        linktree: { novo: 'Novo Linktree', recompra: 'Recompra Linktree' },
+        organico: { novo: 'Novo Organico', recompra: 'Recompra Organico' },
+      }
+      const segment = segmentMap[canal][isRecompra ? 'recompra' : 'novo']
 
       counts[segment].count++
       counts[segment].valor += v.valor
       classificadas.push({ ...v, segmento: segment, matchSource })
 
-      // Campanha breakdown (para vendas de trafego)
-      if (teveTrafego) {
+      // Campanha breakdown (para vendas de trafego e linktree)
+      if (canal !== 'organico') {
         const campanhaKey = v.campanha || v.origem
         if (!campanhaMap[campanhaKey]) {
           campanhaMap[campanhaKey] = { campanha: campanhaKey, count: 0, valor: 0 }
