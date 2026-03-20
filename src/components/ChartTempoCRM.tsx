@@ -36,7 +36,7 @@ export function ChartTempoCRM({ vendas }: Props) {
   })
 
   return (
-    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+    <div className="glass-card rounded-xl p-4">
       <h3 className="text-sm font-semibold mb-3 text-slate-300">Tempo entre CRM e Compra</h3>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-3">

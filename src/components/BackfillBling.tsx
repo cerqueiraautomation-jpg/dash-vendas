@@ -138,7 +138,7 @@ export function BackfillBling({ onSyncComplete, autoFillDatas }: Props) {
   }), { fetched: 0, new_orders: 0, inserted: 0, pending: 0, errors: 0 })
 
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+    <div className="glass-card rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Database className="w-5 h-5 text-orange-400" />

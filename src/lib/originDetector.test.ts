@@ -28,13 +28,13 @@ describe('detectOrigin', () => {
 
     // Real JetSales 1a Mensagem pattern
     it('detecta mensagem real JetSales com fb.me', () => {
-      expect(detectOrigin('Olá! Vi seu anúncio https://fb.me/7xKd2mN e gostaria de um orçamento para camisetas personalizadas')).toBe('Meta CTWA')
+      expect(detectOrigin('Ol\u00e1! Vi seu an\u00fancio https://fb.me/7xKd2mN e gostaria de um or\u00e7amento para camisetas personalizadas')).toBe('Meta CTWA')
     })
   })
 
   describe('Meta CTWA - URL com orcamento', () => {
-    it('detecta url: com orçamento (acento)', () => {
-      expect(detectOrigin('url: https://example.com - orçamento de camisetas')).toBe('Meta CTWA')
+    it('detecta url: com or\u00e7amento (acento)', () => {
+      expect(detectOrigin('url: https://example.com - or\u00e7amento de camisetas')).toBe('Meta CTWA')
     })
 
     it('detecta url: com orcamento (sem acento)', () => {
@@ -48,11 +48,11 @@ describe('detectOrigin', () => {
 
   describe('Meta Redirect', () => {
     it('detecta "recebi o seu contato"', () => {
-      expect(detectOrigin('Olá! Recebi o seu contato pelo WhatsApp')).toBe('Meta Redirect')
+      expect(detectOrigin('Ol\u00e1! Recebi o seu contato pelo WhatsApp')).toBe('Meta Redirect')
     })
 
     it('detecta case-insensitive', () => {
-      expect(detectOrigin('RECEBI O SEU CONTATO via formulário')).toBe('Meta Redirect')
+      expect(detectOrigin('RECEBI O SEU CONTATO via formul\u00e1rio')).toBe('Meta Redirect')
     })
 
     // Real JetSales pattern
@@ -63,7 +63,7 @@ describe('detectOrigin', () => {
 
   describe('Linktree', () => {
     it('detecta "vim pelo linktree"', () => {
-      expect(detectOrigin('Oi, vim pelo linktree de vocês')).toBe('Linktree')
+      expect(detectOrigin('Oi, vim pelo linktree de voc\u00eas')).toBe('Linktree')
     })
 
     it('detecta apenas "linktree"', () => {
@@ -81,11 +81,11 @@ describe('detectOrigin', () => {
 
   describe('Google/Site', () => {
     it('detecta "vim pelo site"', () => {
-      expect(detectOrigin('Oi, vim pelo site de vocês')).toBe('Google/Site')
+      expect(detectOrigin('Oi, vim pelo site de voc\u00eas')).toBe('Google/Site')
     })
 
     it('detecta "vim pelo google"', () => {
-      expect(detectOrigin('Vim pelo Google e achei vocês')).toBe('Google/Site')
+      expect(detectOrigin('Vim pelo Google e achei voc\u00eas')).toBe('Google/Site')
     })
 
     it('detecta case-insensitive', () => {
@@ -94,13 +94,13 @@ describe('detectOrigin', () => {
 
     // Real JetSales pattern
     it('detecta mensagem real JetSales site', () => {
-      expect(detectOrigin('Olá! Vim pelo site, quero fazer um pedido de 50 camisetas')).toBe('Google/Site')
+      expect(detectOrigin('Ol\u00e1! Vim pelo site, quero fazer um pedido de 50 camisetas')).toBe('Google/Site')
     })
   })
 
   describe('Organico (fallback)', () => {
     it('retorna Organico para mensagem sem pattern', () => {
-      expect(detectOrigin('Olá, gostaria de um orçamento')).toBe('Organico')
+      expect(detectOrigin('Ol\u00e1, gostaria de um or\u00e7amento')).toBe('Organico')
     })
 
     it('retorna Organico para string vazia', () => {

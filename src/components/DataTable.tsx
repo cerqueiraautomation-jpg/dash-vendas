@@ -58,8 +58,8 @@ export function DataTable({ vendas }: Props) {
   }
 
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700">
-      <div className="p-4 border-b border-slate-700">
+    <div className="glass-card rounded-xl">
+      <div className="p-4 border-b border-white/5">
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

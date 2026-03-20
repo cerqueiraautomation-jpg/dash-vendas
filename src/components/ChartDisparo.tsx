@@ -54,7 +54,7 @@ export function ChartDisparo({ vendas }: Props) {
   ]
 
   return (
-    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 space-y-4">
+    <div className="glass-card rounded-xl p-4 space-y-4">
       <h3 className="text-sm font-semibold text-slate-300">Analise Completa de Disparos</h3>
 
       {/* KPIs do disparo */}

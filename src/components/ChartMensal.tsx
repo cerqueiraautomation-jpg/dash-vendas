@@ -30,7 +30,7 @@ export function ChartMensal({ vendas }: Props) {
   if (data.length <= 1) return null
 
   return (
-    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+    <div className="glass-card rounded-xl p-4">
       <h3 className="text-sm font-semibold mb-3 text-slate-300">Comparativo Mensal</h3>
       <div className="h-[280px]">
         <ResponsiveContainer width="100%" height="100%">

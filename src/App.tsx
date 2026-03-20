@@ -96,24 +96,26 @@ function App() {
 
   return (
     <div className="min-h-screen p-4 md:p-6 max-w-[1400px] mx-auto space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-xl font-bold">Dashboard de Vendas</h1>
-          <p className="text-sm text-slate-400">{subtitulo}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowAdmin(!showAdmin)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              showAdmin
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
-            }`}
-          >
-            {showAdmin ? 'Fechar Painel' : 'Importar Dados'}
-          </button>
-          <div className="text-xs text-slate-500">
-            {vendasFiltradas.length} registros
+      <div className="glass-header sticky top-0 z-30 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-4 md:px-6 py-4 mb-2">
+        <div className="flex items-center justify-between max-w-[1400px] mx-auto">
+          <div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Dashboard de Vendas</h1>
+            <p className="text-sm text-slate-500">{subtitulo}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowAdmin(!showAdmin)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                showAdmin
+                  ? 'bg-blue-500/80 text-white shadow-lg shadow-blue-500/20'
+                  : 'glass text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {showAdmin ? 'Fechar Painel' : 'Importar Dados'}
+            </button>
+            <div className="text-xs text-slate-600">
+              {vendasFiltradas.length} registros
+            </div>
           </div>
         </div>
       </div>
@@ -132,7 +134,7 @@ function App() {
             setMesSelecionado(e.target.value)
             setFilterMode('mes')
           }}
-          className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          className="glass text-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
         >
           <option value="" disabled>Selecionar mes</option>
           {mesesDisponiveis.map(m => (
@@ -140,7 +142,7 @@ function App() {
           ))}
         </select>
 
-        <div className="w-px h-6 bg-slate-700" />
+        <div className="w-px h-6 bg-white/5" />
 
         {([
           ['todos', 'Todos'],
@@ -151,10 +153,10 @@ function App() {
           <button
             key={mode}
             onClick={() => setFilterMode(mode)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               filterMode === mode
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+                ? 'bg-blue-500/80 text-white shadow-lg shadow-blue-500/20'
+                : 'glass text-slate-400 hover:text-slate-200'
             }`}
           >
             {label}
@@ -168,7 +170,7 @@ function App() {
               type="date"
               value={diaSelecionado}
               onChange={e => setDiaSelecionado(e.target.value)}
-              className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="glass text-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
             />
           </div>
         )}

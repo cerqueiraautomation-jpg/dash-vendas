@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { mapFromReferral, mapFromContactOrigin } from './originMapper'
 import type { ReferralInfo } from './originMapper'
 
+// ---------------------------------------------------------------------------
+// mapFromReferral
+// ---------------------------------------------------------------------------
 describe('mapFromReferral', () => {
   describe('retorna null quando nao ha referral_source', () => {
     it('retorna null quando referral_source e null', () => {
@@ -160,40 +163,87 @@ describe('mapFromReferral', () => {
   })
 })
 
+// ---------------------------------------------------------------------------
+// mapFromContactOrigin
+// ---------------------------------------------------------------------------
 describe('mapFromContactOrigin', () => {
   it('mapeia "meta_ads" para "Meta Direto"', () => {
-    expect(mapFromContactOrigin('meta_ads')).toEqual({ origem: 'Meta Direto', campanha: null })
+    expect(mapFromContactOrigin('meta_ads')).toEqual({
+      origem: 'Meta Direto',
+      campanha: null,
+    })
   })
+
   it('mapeia "ctwa_ad" para "Meta CTWA"', () => {
-    expect(mapFromContactOrigin('ctwa_ad')).toEqual({ origem: 'Meta CTWA', campanha: null })
+    expect(mapFromContactOrigin('ctwa_ad')).toEqual({
+      origem: 'Meta CTWA',
+      campanha: null,
+    })
   })
+
   it('mapeia "linktree" para "Linktree"', () => {
-    expect(mapFromContactOrigin('linktree')).toEqual({ origem: 'Linktree', campanha: null })
+    expect(mapFromContactOrigin('linktree')).toEqual({
+      origem: 'Linktree',
+      campanha: null,
+    })
   })
+
   it('mapeia "manual" para "Cadastro Manual"', () => {
-    expect(mapFromContactOrigin('manual')).toEqual({ origem: 'Cadastro Manual', campanha: null })
+    expect(mapFromContactOrigin('manual')).toEqual({
+      origem: 'Cadastro Manual',
+      campanha: null,
+    })
   })
+
   it('mapeia "whatsapp" para "Organico (WhatsApp)"', () => {
-    expect(mapFromContactOrigin('whatsapp')).toEqual({ origem: 'Organico (WhatsApp)', campanha: null })
+    expect(mapFromContactOrigin('whatsapp')).toEqual({
+      origem: 'Organico (WhatsApp)',
+      campanha: null,
+    })
   })
+
   it('mapeia "redirect" para "Meta Redirect"', () => {
-    expect(mapFromContactOrigin('redirect')).toEqual({ origem: 'Meta Redirect', campanha: null })
+    expect(mapFromContactOrigin('redirect')).toEqual({
+      origem: 'Meta Redirect',
+      campanha: null,
+    })
   })
+
   it('mapeia "site" para "Google/Site"', () => {
-    expect(mapFromContactOrigin('site')).toEqual({ origem: 'Google/Site', campanha: null })
+    expect(mapFromContactOrigin('site')).toEqual({
+      origem: 'Google/Site',
+      campanha: null,
+    })
   })
+
   it('mapeia "n8n" para "Automacao (n8n)"', () => {
-    expect(mapFromContactOrigin('n8n')).toEqual({ origem: 'Automacao (n8n)', campanha: null })
+    expect(mapFromContactOrigin('n8n')).toEqual({
+      origem: 'Automacao (n8n)',
+      campanha: null,
+    })
   })
+
   it('mapeia null para "Organico (sem origem)"', () => {
-    expect(mapFromContactOrigin(null)).toEqual({ origem: 'Organico (sem origem)', campanha: null })
+    expect(mapFromContactOrigin(null)).toEqual({
+      origem: 'Organico (sem origem)',
+      campanha: null,
+    })
   })
+
   it('mapeia string vazia para "Organico (sem origem)"', () => {
-    expect(mapFromContactOrigin('')).toEqual({ origem: 'Organico (sem origem)', campanha: null })
+    expect(mapFromContactOrigin('')).toEqual({
+      origem: 'Organico (sem origem)',
+      campanha: null,
+    })
   })
+
   it('mapeia string desconhecida para "Organico (sem origem)"', () => {
-    expect(mapFromContactOrigin('valor_desconhecido')).toEqual({ origem: 'Organico (sem origem)', campanha: null })
+    expect(mapFromContactOrigin('valor_desconhecido')).toEqual({
+      origem: 'Organico (sem origem)',
+      campanha: null,
+    })
   })
+
   it('todos os resultados tem campanha: null', () => {
     const inputs = ['meta_ads', 'ctwa_ad', 'linktree', 'manual', 'whatsapp', 'redirect', 'site', 'n8n', null, '']
     for (const input of inputs) {

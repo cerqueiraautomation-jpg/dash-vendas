@@ -16,7 +16,7 @@ export function ChartDiario({ vendas }: Props) {
   const data = Object.values(byDay).sort((a, b) => a.data.localeCompare(b.data))
 
   return (
-    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+    <div className="glass-card rounded-xl p-4">
       <h3 className="text-sm font-semibold mb-3 text-slate-300">Faturamento Diario</h3>
       <div className="h-64">
         <ResponsiveContainer>

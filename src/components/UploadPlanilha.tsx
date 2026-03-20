@@ -125,7 +125,7 @@ export function UploadPlanilha({ onUploadComplete, onPeriodoDetectado }: Props) 
     : 0
 
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+    <div className="glass-card rounded-xl p-4">
       <div className="flex items-center gap-2 mb-4">
         <FileSpreadsheet className="w-5 h-5 text-blue-400" />
         <h2 className="text-sm font-semibold">Upload Planilha JetSales</h2>

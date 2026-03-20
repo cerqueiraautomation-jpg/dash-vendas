@@ -15,7 +15,7 @@ export function ChartVendedor({ vendas }: Props) {
   const data = Object.values(byVendedor).sort((a, b) => b.valor - a.valor)
 
   return (
-    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+    <div className="glass-card rounded-xl p-4">
       <h3 className="text-sm font-semibold mb-3 text-slate-300">Faturamento por Vendedor</h3>
       <div className="h-64">
         <ResponsiveContainer>

@@ -62,6 +62,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       return { segmentacao: [], vendasClassificadas: [] as VendaComSegmento[] }
     }
 
+    // Phone -> historico lookup (dados primarios)
     const phoneToHistorico = new Map<string, LeadHistorico[]>()
     for (const h of historico) {
       if (!h.telefone_normalizado) continue
@@ -70,6 +71,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       phoneToHistorico.set(h.telefone_normalizado, entries)
     }
 
+    // Nome completo exato -> historico lookup (fallback conservador)
     const nomeExatoToHistorico = new Map<string, LeadHistorico[]>()
     for (const h of historico) {
       const key = h.nome.toLowerCase().trim()
@@ -79,6 +81,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       nomeExatoToHistorico.set(key, entries)
     }
 
+    // Compras por nome normalizado (recompra detection)
     const comprasPorNome = new Map<string, number>()
     for (const v of vendas) {
       const key = v.nome.toLowerCase().trim()
@@ -100,6 +103,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       let teveTrafego = false
       let matchMethod: 'telefone' | 'nome' | null = null
 
+      // 1. Match por telefone (dado primario, mais confiavel)
       const phone = v.contact_id ? contactPhones.get(v.contact_id) : undefined
       let trafegoEntries: LeadHistorico[] | undefined
 
@@ -108,11 +112,13 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
         if (trafegoEntries) matchMethod = 'telefone'
       }
 
+      // 2. Fallback: match por nome completo exato (sem fuzzy)
       if (!trafegoEntries && nomeKey.length >= 5) {
         trafegoEntries = nomeExatoToHistorico.get(nomeKey)
         if (trafegoEntries) matchMethod = 'nome'
       }
 
+      // Verificar janela de atribuicao
       if (trafegoEntries) {
         const dataPedido = new Date(v.data_pedido + 'T12:00:00')
         teveTrafego = trafegoEntries.some(e => {
@@ -152,7 +158,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
 
   if (isLoading) {
     return (
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+      <div className="glass-card rounded-xl p-4">
         <div className="text-slate-400 text-sm">Carregando segmentacao...</div>
       </div>
     )
@@ -160,7 +166,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
 
   if (historico.length === 0) {
     return (
-      <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+      <div className="glass-card rounded-xl p-4">
         <div className="text-sm text-slate-400">
           Nenhum dado de trafego importado. Use o upload de planilhas JetSales para comecar.
         </div>
@@ -177,7 +183,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
   ]) as any
 
   return (
-    <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+    <div className="glass-card rounded-xl p-4">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-sm font-semibold">Segmentacao de Clientes</h2>
