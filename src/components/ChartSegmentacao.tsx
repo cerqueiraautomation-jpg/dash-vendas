@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '../utils/format'
 
 type Props = {
   vendas: Venda[]
+  todasVendas: Venda[]
   historico: LeadHistorico[]
   historicoLoading: boolean
 }
@@ -23,9 +24,7 @@ const SEGMENT_COLORS: Record<string, string> = {
   'Novo Trafego': '#8b5cf6',
   'Novo Linktree': '#06b6d4',
   'Novo Organico': '#22c55e',
-  'Recompra Trafego': '#f59e0b',
-  'Recompra Linktree': '#0891b2',
-  'Recompra Organico': '#3b82f6',
+  'Recompra': '#f59e0b',
 }
 
 /** Origens que indicam trafego pago */
@@ -48,7 +47,7 @@ function isOrigemLinktree(origem: string): boolean {
   return origem === 'Linktree'
 }
 
-export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props) {
+export function ChartSegmentacao({ vendas, todasVendas, historico, historicoLoading }: Props) {
   const janela = 90
   const [contactPhones, setContactPhones] = useState<Map<string, string>>(new Map())
   const [loadingContacts, setLoadingContacts] = useState(true)
@@ -113,9 +112,9 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       nomeExatoToHistorico.set(key, entries)
     }
 
-    // Compras por nome (recompra detection)
+    // Compras por nome usando TODAS as vendas (historico completo pra detectar recompra)
     const comprasPorNome = new Map<string, number>()
-    for (const v of vendas) {
+    for (const v of todasVendas) {
       const key = v.nome.toLowerCase().trim()
       comprasPorNome.set(key, (comprasPorNome.get(key) ?? 0) + 1)
     }
@@ -124,9 +123,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       'Novo Trafego': { count: 0, valor: 0 },
       'Novo Linktree': { count: 0, valor: 0 },
       'Novo Organico': { count: 0, valor: 0 },
-      'Recompra Trafego': { count: 0, valor: 0 },
-      'Recompra Linktree': { count: 0, valor: 0 },
-      'Recompra Organico': { count: 0, valor: 0 },
+      'Recompra': { count: 0, valor: 0 },
     }
 
     const classificadas: VendaComSegmento[] = []
@@ -186,12 +183,16 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
         }
       }
 
-      const segmentMap: Record<string, Record<string, string>> = {
-        trafego: { novo: 'Novo Trafego', recompra: 'Recompra Trafego' },
-        linktree: { novo: 'Novo Linktree', recompra: 'Recompra Linktree' },
-        organico: { novo: 'Novo Organico', recompra: 'Recompra Organico' },
+      let segment: string
+      if (isRecompra) {
+        segment = 'Recompra'
+      } else if (canal === 'trafego') {
+        segment = 'Novo Trafego'
+      } else if (canal === 'linktree') {
+        segment = 'Novo Linktree'
+      } else {
+        segment = 'Novo Organico'
       }
-      const segment = segmentMap[canal][isRecompra ? 'recompra' : 'novo']
 
       counts[segment].count++
       counts[segment].valor += v.valor
@@ -215,7 +216,7 @@ export function ChartSegmentacao({ vendas, historico, historicoLoading }: Props)
       vendasClassificadas: classificadas,
       campanhaBreakdown: Object.values(campanhaMap).sort((a, b) => b.valor - a.valor),
     }
-  }, [vendas, historico, contactPhones, janela, loadingContacts])
+  }, [vendas, todasVendas, historico, contactPhones, janela, loadingContacts])
 
   const vendasDoSegmento = useMemo(() => {
     if (!selectedSegment) return []

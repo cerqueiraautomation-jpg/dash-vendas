@@ -218,6 +218,7 @@ function App() {
 
       <ChartSegmentacao
         vendas={vendasFiltradas}
+        todasVendas={vendas}
         historico={historico}
         historicoLoading={historicoLoading}
       />
