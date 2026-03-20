@@ -156,7 +156,7 @@ function App() {
             <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mesDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
           {mesDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 z-50 min-w-[160px] max-h-64 overflow-y-auto glass-card rounded-lg py-1 shadow-xl shadow-black/30">
+            <div className="absolute top-full left-0 mt-1 z-50 min-w-[160px] max-h-64 overflow-y-auto bg-[#141b2d] border border-slate-700 rounded-lg py-1 shadow-xl shadow-black/50">
               {mesesDisponiveis.map(m => (
                 <button
                   key={m.key}
