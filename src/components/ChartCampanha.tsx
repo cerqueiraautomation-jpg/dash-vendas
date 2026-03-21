@@ -1,7 +1,11 @@
 import type { Venda } from '../lib/supabase'
 import { formatCurrency } from '../utils/format'
 
-type Props = { vendas: Venda[] }
+type Props = {
+  vendas: Venda[]
+  activeCampanha?: string | null
+  onCampanhaClick?: (campanha: string) => void
+}
 
 const tipoColors: Record<string, string> = {
   'Meta Redirect': '#f97316',
@@ -15,7 +19,7 @@ const tipoColorsLight: Record<string, string> = {
   'Meta Direto': '#f87171',
 }
 
-export function ChartCampanha({ vendas }: Props) {
+export function ChartCampanha({ vendas, activeCampanha, onCampanhaClick }: Props) {
   const metaVendas = vendas.filter(v => v.origem.startsWith('Meta'))
 
   const byCampanha = metaVendas.reduce((acc, v) => {
@@ -87,8 +91,11 @@ export function ChartCampanha({ vendas }: Props) {
               return (
                 <div
                   key={d.campanha}
-                  className={`relative text-xs py-1.5 px-2 rounded border-b border-slate-700/30 ${
-                    i % 2 === 1 ? 'bg-white/[0.02]' : ''
+                  onClick={() => onCampanhaClick?.(d.campanha)}
+                  className={`relative text-xs py-1.5 px-2 rounded border-b border-slate-700/30 transition-all ${
+                    onCampanhaClick ? 'cursor-pointer hover:bg-white/[0.05]' : ''
+                  } ${activeCampanha === d.campanha ? 'bg-white/[0.06] ring-1 ring-blue-500/30' : i % 2 === 1 ? 'bg-white/[0.02]' : ''} ${
+                    activeCampanha && activeCampanha !== d.campanha ? 'opacity-40' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between relative z-10">

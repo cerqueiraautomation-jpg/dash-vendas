@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { CalendarDays, ChevronDown } from 'lucide-react'
+import { CalendarDays, ChevronDown, X, Filter } from 'lucide-react'
 import { useVendas } from './hooks/useVendas'
 import { useLeadHistorico } from './hooks/useLeadHistorico'
 import { KPICards } from './components/KPICards'
@@ -29,6 +29,11 @@ function toLocalDateStr(d: Date): string {
 
 type FilterMode = 'todos' | '7dias' | '15dias' | 'dia' | 'mes'
 
+interface CrossFilter {
+  type: 'origem' | 'campanha' | 'vendedor'
+  value: string
+}
+
 function App() {
   const { vendas, loading, refetch: refetchVendas } = useVendas()
   const { historico, loading: historicoLoading, refetch: refetchHistorico } = useLeadHistorico()
@@ -38,6 +43,7 @@ function App() {
   const [showAdmin, setShowAdmin] = useState(false)
   const [backfillDatas, setBackfillDatas] = useState<{ inicio: string; fim: string } | null>(null)
   const [mesDropdownOpen, setMesDropdownOpen] = useState(false)
+  const [crossFilter, setCrossFilter] = useState<CrossFilter | null>(null)
   const mesDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -75,6 +81,26 @@ function App() {
         return vendas
     }
   }, [vendas, filterMode, mesSelecionado, diaSelecionado])
+
+  const vendasCrossFiltered = useMemo(() => {
+    if (!crossFilter) return vendasFiltradas
+    switch (crossFilter.type) {
+      case 'origem':
+        return vendasFiltradas.filter(v => v.origem === crossFilter.value)
+      case 'campanha':
+        return vendasFiltradas.filter(v => (v.campanha || 'Sem campanha') === crossFilter.value)
+      case 'vendedor':
+        return vendasFiltradas.filter(v => v.vendedor === crossFilter.value)
+      default:
+        return vendasFiltradas
+    }
+  }, [vendasFiltradas, crossFilter])
+
+  function handleCrossFilter(type: CrossFilter['type'], value: string) {
+    setCrossFilter(prev =>
+      prev?.type === type && prev?.value === value ? null : { type, value }
+    )
+  }
 
   const subtitulo = useMemo(() => {
     switch (filterMode) {
@@ -212,30 +238,55 @@ function App() {
         )}
       </div>
 
-      <KPICards vendas={vendasFiltradas} />
+      {/* Cross-filter banner */}
+      {crossFilter && (
+        <div className="flex items-center gap-2 glass-card rounded-lg px-3 py-2">
+          <Filter className="w-3.5 h-3.5 text-blue-400" />
+          <span className="text-xs text-slate-400">Filtro cruzado:</span>
+          <span className="text-xs font-medium text-blue-300">{crossFilter.value}</span>
+          <span className="text-xs text-slate-500">({vendasCrossFiltered.length} vendas)</span>
+          <button
+            onClick={() => setCrossFilter(null)}
+            className="ml-auto flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors glass rounded-md px-2 py-1"
+          >
+            <X className="w-3 h-3" />
+            Limpar
+          </button>
+        </div>
+      )}
+
+      <KPICards vendas={vendasCrossFiltered} />
 
       <ChartMensal vendas={vendas} />
 
       <ChartSegmentacao
-        vendas={vendasFiltradas}
+        vendas={vendasCrossFiltered}
         todasVendas={vendas}
         historico={historico}
         historicoLoading={historicoLoading}
       />
 
-      <ResumoExecutivo vendas={vendasFiltradas} mesSelecionado={mesSelecionado} />
+      <ResumoExecutivo vendas={vendasCrossFiltered} mesSelecionado={mesSelecionado} />
 
-      <ChartOrigem vendas={vendasFiltradas} />
+      <ChartOrigem
+        vendas={vendasFiltradas}
+        activeOrigem={crossFilter?.type === 'origem' ? crossFilter.value : null}
+        onOrigemClick={(origem) => handleCrossFilter('origem', origem)}
+      />
 
-      <ChartDiario vendas={vendasFiltradas} />
+      <ChartDiario vendas={vendasCrossFiltered} />
 
-      <ChartTempoCRM vendas={vendasFiltradas} />
+      <ChartTempoCRM vendas={vendasCrossFiltered} />
 
-      <ChartDisparo vendas={vendasFiltradas} />
+      <ChartDisparo vendas={vendasCrossFiltered} />
 
-      <ChartCampanha vendas={vendasFiltradas} />
+      <ChartCampanha
+        vendas={vendasFiltradas}
+        activeCampanha={crossFilter?.type === 'campanha' ? crossFilter.value : null}
+        onCampanhaClick={(campanha) => handleCrossFilter('campanha', campanha)}
+      />
 
-      <DataTable vendas={vendasFiltradas} />
+      <DataTable vendas={vendasCrossFiltered} />
     </div>
   )
 }

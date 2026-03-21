@@ -2,7 +2,11 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import type { Venda } from '../lib/supabase'
 import { formatCurrency } from '../utils/format'
 
-type Props = { vendas: Venda[] }
+type Props = {
+  vendas: Venda[]
+  activeOrigem?: string | null
+  onOrigemClick?: (origem: string) => void
+}
 
 const COLORS: Record<string, string> = {
   'Organico (sem origem)': '#3b82f6',
@@ -49,7 +53,7 @@ function CustomTooltip({ active, payload, totalValue }: CustomTooltipProps) {
   )
 }
 
-export function ChartOrigem({ vendas }: Props) {
+export function ChartOrigem({ vendas, activeOrigem, onOrigemClick }: Props) {
   const byOrigem = vendas.reduce((acc, v) => {
     acc[v.origem] = (acc[v.origem] || 0) + v.valor
     return acc
@@ -83,9 +87,15 @@ export function ChartOrigem({ vendas }: Props) {
                 innerRadius={40}
                 stroke="#0a0f1a"
                 strokeWidth={2}
+                style={{ cursor: onOrigemClick ? 'pointer' : 'default' }}
+                onClick={onOrigemClick ? (_: unknown, index: number) => onOrigemClick(data[index].name) : undefined}
               >
                 {data.map(d => (
-                  <Cell key={d.name} fill={COLORS[d.name] || '#64748b'} />
+                  <Cell
+                    key={d.name}
+                    fill={COLORS[d.name] || '#64748b'}
+                    opacity={activeOrigem && activeOrigem !== d.name ? 0.3 : 1}
+                  />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip totalValue={totalValue} />} />
@@ -101,7 +111,12 @@ export function ChartOrigem({ vendas }: Props) {
             return (
               <div
                 key={d.name}
-                className="relative flex items-center justify-between gap-2 hover:bg-white/[0.03] rounded-lg px-2 py-1 transition-colors"
+                onClick={() => onOrigemClick?.(d.name)}
+                className={`relative flex items-center justify-between gap-2 rounded-lg px-2 py-1 transition-all ${
+                  onOrigemClick ? 'cursor-pointer hover:bg-white/[0.05]' : 'hover:bg-white/[0.03]'
+                } ${activeOrigem === d.name ? 'bg-white/[0.06] ring-1 ring-white/10' : ''} ${
+                  activeOrigem && activeOrigem !== d.name ? 'opacity-40' : ''
+                }`}
               >
                 {/* Percentage bar background */}
                 <div
