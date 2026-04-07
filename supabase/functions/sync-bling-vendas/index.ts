@@ -125,6 +125,110 @@ function mapContactOriginToOrigin(contactOrigin: string | null): { origin: strin
   return { origin: mapped ?? "Organico (sem origem)", campanha: null };
 }
 
+function normalizeBrPhone(phone: string): string | null {
+  if (!phone || phone.startsWith("ig:")) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10 || digits.length > 13) return null;
+  // Últimos 9 dígitos (celular BR), validar que 1º desses começa 6-9
+  const last9 = digits.slice(-9);
+  if (last9.length !== 9 || !/^[6-9]/.test(last9)) return null;
+  return last9;
+}
+
+// Hard guard anti-ReDoS: mensagens acima disso são raramente phones reais e podem
+// travar o regex por backtracking. Ver SEC-DASH-002 no security review.
+const MAX_MESSAGE_LENGTH_FOR_PHONE_EXTRACTION = 5000;
+
+// Tenant da Space (owner dos dados Bling). O CRM é multi-tenant e a Edge Function
+// usa service_role_key (bypassa RLS), então precisamos filtrar manualmente.
+// Ver SEC-DASH-001 no security review.
+const SPACE_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+
+// Mensagens IG Direct mais antigas que isso são ignoradas — evita query custosa
+// carregando histórico infinito. Ver SEC-DASH-004.
+const IG_MESSAGE_LIMIT_PER_CONVERSATION = 100;
+
+function extractPhonesFromText(text: string): string[] {
+  if (!text) return [];
+  if (text.length > MAX_MESSAGE_LENGTH_FOR_PHONE_EXTRACTION) return [];
+  // Remove URLs primeiro (pra evitar false positives de IDs CDN)
+  const cleaned = text
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/www\.\S+/gi, " ");
+  // Regex BR: opcional +55, opcional DDD com parênteses, 4-5 dígitos, separador, 4 dígitos
+  const regex = /(?:\+?55[\s-]?)?\(?[1-9]\d\)?[\s-]?9?\d{4}[\s-]?\d{4}/g;
+  const matches = cleaned.match(regex) || [];
+  const phones = new Set<string>();
+  for (const match of matches) {
+    const normalized = normalizeBrPhone(match);
+    if (normalized) phones.add(normalized);
+  }
+  return Array.from(phones);
+}
+
+async function fetchInstagramDirectPhoneMap(
+  supabase: SupabaseClient
+): Promise<Map<string, string>> {
+  // Map: phone9 -> ig_contact_id
+  const phoneMap = new Map<string, string>();
+
+  // 1. Buscar ig_contact_ids — FILTRAR por tenant_id (CRM multi-tenant, service_role bypassa RLS)
+  const { data: igContacts } = await supabase
+    .from("contacts")
+    .select("id")
+    .eq("origin", "instagram_direct")
+    .eq("tenant_id", SPACE_TENANT_ID);
+
+  if (!igContacts || igContacts.length === 0) return phoneMap;
+
+  const igContactIds = igContacts.map((c: any) => c.id);
+
+  // 2. Buscar conversations desses contatos (tenant_id implícito via contact_id)
+  const convToContact = new Map<string, string>();
+  const batchSize = 50;
+  for (let i = 0; i < igContactIds.length; i += batchSize) {
+    const batch = igContactIds.slice(i, i + batchSize);
+    const { data: convs } = await supabase
+      .from("conversations")
+      .select("id, contact_id")
+      .in("contact_id", batch)
+      .eq("tenant_id", SPACE_TENANT_ID);
+    if (convs) {
+      for (const c of convs as any[]) convToContact.set(c.id, c.contact_id);
+    }
+  }
+
+  if (convToContact.size === 0) return phoneMap;
+
+  // 3. Buscar mensagens recebidas com limite por batch (evita carregar milhões)
+  const convIds = Array.from(convToContact.keys());
+  for (let i = 0; i < convIds.length; i += batchSize) {
+    const batch = convIds.slice(i, i + batchSize);
+    const { data: msgs } = await supabase
+      .from("messages")
+      .select("conversation_id, content, created_at")
+      .in("conversation_id", batch)
+      .eq("is_from_me", false)
+      .not("content", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(IG_MESSAGE_LIMIT_PER_CONVERSATION * batch.length);
+    if (msgs) {
+      for (const msg of msgs as any[]) {
+        if (!msg.content || typeof msg.content !== "string") continue;
+        const phones = extractPhonesFromText(msg.content);
+        for (const phone of phones) {
+          if (!phoneMap.has(phone)) {
+            const igContactId = convToContact.get(msg.conversation_id);
+            if (igContactId) phoneMap.set(phone, igContactId);
+          }
+        }
+      }
+    }
+  }
+
+  return phoneMap;
+}
+
 async function getBlingTokens(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("token_bling")
@@ -612,6 +716,9 @@ async function completeBackfill(
   const fpCache = await prefetchOrigins(supabase, matchedContactIds);
   const disparoCache = await prefetchDisparos(supabase, matchedContactIds);
 
+  // PHASE 3.5: Build phone→IG contact map for Instagram Direct cross-ref
+  const igPhoneMap = await fetchInstagramDirectPhoneMap(supabase);
+
   // PHASE 4: Build rows and insert
   const results = { inserted: 0, enriched: 0, pending: 0, errors: [] as any[] };
   const rows: any[] = [];
@@ -647,6 +754,20 @@ async function completeBackfill(
           if (vendedorNome === "SEM VENDEDOR" && fp.vendedor_crm) {
             vendedorNome = fp.vendedor_crm;
           }
+        }
+      }
+
+      // Instagram Direct cross-ref: se o telefone do contato WhatsApp foi
+      // mencionado em msgs de algum contato IG Direct, override origem.
+      // Modelo "last touch" — IG Direct é o canal ativo atual do cliente.
+      // Exceção: se origem já é família Instagram, mantém (não sobrescreve entre IG).
+      // Risco teórico (SEC-DASH-003): se 2 pessoas distintas compartilharem o mesmo
+      // phone (raro — phone é PII único), misclassificação pontual. Aceito pelo negócio.
+      if (match && igPhoneMap.size > 0 && !origem.startsWith("Instagram")) {
+        const phone9 = normalizeBrPhone(match.phone || "");
+        if (phone9 && igPhoneMap.has(phone9)) {
+          origem = "Instagram Direct";
+          campanha = null;
         }
       }
 
