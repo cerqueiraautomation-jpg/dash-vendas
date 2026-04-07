@@ -23,6 +23,7 @@ type VendaComSegmento = Venda & {
 const SEGMENT_COLORS: Record<string, string> = {
   'Novo Trafego': '#8b5cf6',
   'Novo Linktree': '#06b6d4',
+  'Novos Instagram': '#E1306C',
   'Novo Organico': '#22c55e',
   'Recompra': '#f59e0b',
 }
@@ -33,10 +34,15 @@ const ORIGENS_TRAFEGO = [
   'Meta Redirect',
   'Meta Direto',
   'Google/Site',
-  'Instagram Organico',
-  'Instagram Stories',
   'Indicacao',
   'Automacao (n8n)',
+]
+
+/** Origens vindas do Instagram (bucket dedicado) */
+const ORIGENS_INSTAGRAM = [
+  'Instagram Direct',
+  'Instagram Organico',
+  'Instagram Stories',
 ]
 
 function isOrigemTrafego(origem: string): boolean {
@@ -45,6 +51,10 @@ function isOrigemTrafego(origem: string): boolean {
 
 function isOrigemLinktree(origem: string): boolean {
   return origem === 'Linktree'
+}
+
+function isOrigemInstagram(origem: string): boolean {
+  return ORIGENS_INSTAGRAM.includes(origem)
 }
 
 export function ChartSegmentacao({ vendas, todasVendas, historico, historicoLoading }: Props) {
@@ -122,6 +132,7 @@ export function ChartSegmentacao({ vendas, todasVendas, historico, historicoLoad
     const counts: Record<string, { count: number; valor: number }> = {
       'Novo Trafego': { count: 0, valor: 0 },
       'Novo Linktree': { count: 0, valor: 0 },
+      'Novos Instagram': { count: 0, valor: 0 },
       'Novo Organico': { count: 0, valor: 0 },
       'Recompra': { count: 0, valor: 0 },
     }
@@ -132,15 +143,18 @@ export function ChartSegmentacao({ vendas, todasVendas, historico, historicoLoad
     for (const v of vendas) {
       const nomeKey = v.nome.toLowerCase().trim()
       const isRecompra = (comprasPorNome.get(nomeKey) ?? 1) > 1
-      let canal: 'trafego' | 'linktree' | 'organico' = 'organico'
+      let canal: 'trafego' | 'linktree' | 'instagram' | 'organico' = 'organico'
       let matchSource: MatchSource = null
 
       // 1. Campo origem da venda (fonte mais direta)
-      if (isOrigemTrafego(v.origem)) {
-        canal = 'trafego'
+      if (isOrigemInstagram(v.origem)) {
+        canal = 'instagram'
         matchSource = 'origem'
       } else if (isOrigemLinktree(v.origem)) {
         canal = 'linktree'
+        matchSource = 'origem'
+      } else if (isOrigemTrafego(v.origem)) {
+        canal = 'trafego'
         matchSource = 'origem'
       }
 
@@ -186,6 +200,8 @@ export function ChartSegmentacao({ vendas, todasVendas, historico, historicoLoad
       let segment: string
       if (isRecompra) {
         segment = 'Recompra'
+      } else if (canal === 'instagram') {
+        segment = 'Novos Instagram'
       } else if (canal === 'trafego') {
         segment = 'Novo Trafego'
       } else if (canal === 'linktree') {

@@ -20,6 +20,7 @@ export const CONTACT_ORIGIN_MAP: Record<string, string> = {
   redirect: "Meta Redirect",
   site: "Google/Site",
   n8n: "Automacao (n8n)",
+  instagram_direct: "Instagram Direct",
 };
 
 /**
@@ -81,6 +82,12 @@ export function mapFromReferral(info: ReferralInfo): OriginResult | null {
     case "site":
       return {
         origem: "Google/Site",
+        campanha: data.campaign_name ?? null,
+      };
+
+    case "instagram_direct":
+      return {
+        origem: "Instagram Direct",
         campanha: data.campaign_name ?? null,
       };
 

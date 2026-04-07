@@ -57,6 +57,7 @@ export function DataTable({ vendas }: Props) {
     'Meta Direto': 'bg-gradient-to-r from-red-500/20 to-red-600/10 text-red-300',
     'Nao encontrado': 'bg-gradient-to-r from-slate-500/20 to-slate-600/10 text-slate-300',
     'Linktree': 'bg-gradient-to-r from-cyan-500/20 to-cyan-600/10 text-cyan-300',
+    'Instagram Direct': 'bg-gradient-to-r from-pink-500/20 to-pink-600/10 text-pink-300',
   }
 
   return (

@@ -14,6 +14,7 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
     naoEncontrado: vendas.filter(v => v.origem === 'Nao encontrado'),
     linktree: vendas.filter(v => v.origem === 'Linktree'),
     googleSite: vendas.filter(v => v.origem === 'Google/Site'),
+    instagram: vendas.filter(v => v.origem.startsWith('Instagram')),
   }
 
   const metaRedirect = vendas.filter(v => v.origem === 'Meta Redirect')
@@ -62,6 +63,7 @@ export function ResumoExecutivo({ vendas, mesSelecionado }: Props) {
               <Row label="Nao encontrado no CRM" value={`${origemGroups.naoEncontrado.length} vendas (${pct(origemGroups.naoEncontrado.length)}%) = ${formatCurrency(sum(origemGroups.naoEncontrado))}`} warn />
               <Row label="Linktree" value={`${origemGroups.linktree.length} vendas (${pct(origemGroups.linktree.length)}%) = ${formatCurrency(sum(origemGroups.linktree))}`} />
               <Row label="Google/Site" value={`${origemGroups.googleSite.length} vendas (${pct(origemGroups.googleSite.length)}%) = ${formatCurrency(sum(origemGroups.googleSite))}`} />
+              <Row label="Instagram (total)" value={`${origemGroups.instagram.length} vendas (${pct(origemGroups.instagram.length)}%) = ${formatCurrency(sum(origemGroups.instagram))}`} />
             </div>
           </div>
         </div>

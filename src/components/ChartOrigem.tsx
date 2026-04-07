@@ -18,6 +18,7 @@ const COLORS: Record<string, string> = {
   'Nao encontrado': '#64748b',
   'Linktree': '#06b6d4',
   'Google/Site': '#10b981',
+  'Instagram Direct': '#E1306C',
 }
 
 interface CustomTooltipProps {

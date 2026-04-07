@@ -149,6 +149,30 @@ describe('mapFromReferral', () => {
     })
   })
 
+  describe('instagram_direct', () => {
+    it('mapeia "instagram_direct" para "Instagram Direct" com campaign_name', () => {
+      const info: ReferralInfo = {
+        referral_source: 'instagram_direct',
+        referral_data: { campaign_name: 'promo-instagram' },
+      }
+      expect(mapFromReferral(info)).toEqual({
+        origem: 'Instagram Direct',
+        campanha: 'promo-instagram',
+      })
+    })
+
+    it('mapeia "instagram_direct" para "Instagram Direct" com campanha null', () => {
+      const info: ReferralInfo = {
+        referral_source: 'instagram_direct',
+        referral_data: {},
+      }
+      expect(mapFromReferral(info)).toEqual({
+        origem: 'Instagram Direct',
+        campanha: null,
+      })
+    })
+  })
+
   describe('referral_source desconhecido', () => {
     it('mapeia referral_source desconhecido para "Outro (xxx)"', () => {
       const info: ReferralInfo = {
@@ -223,6 +247,13 @@ describe('mapFromContactOrigin', () => {
     })
   })
 
+  it('mapeia "instagram_direct" para "Instagram Direct"', () => {
+    expect(mapFromContactOrigin('instagram_direct')).toEqual({
+      origem: 'Instagram Direct',
+      campanha: null,
+    })
+  })
+
   it('mapeia null para "Organico (sem origem)"', () => {
     expect(mapFromContactOrigin(null)).toEqual({
       origem: 'Organico (sem origem)',
@@ -245,7 +276,7 @@ describe('mapFromContactOrigin', () => {
   })
 
   it('todos os resultados tem campanha: null', () => {
-    const inputs = ['meta_ads', 'ctwa_ad', 'linktree', 'manual', 'whatsapp', 'redirect', 'site', 'n8n', null, '']
+    const inputs = ['meta_ads', 'ctwa_ad', 'linktree', 'manual', 'whatsapp', 'redirect', 'site', 'n8n', 'instagram_direct', null, '']
     for (const input of inputs) {
       const result = mapFromContactOrigin(input)
       expect(result.campanha).toBeNull()
